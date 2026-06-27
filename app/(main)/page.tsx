@@ -37,7 +37,7 @@ export default async function HomePage() {
     if (!profile) redirect("/onboarding/username");
 
     return (
-      <main className="mx-auto w-full max-w-2xl flex-1 space-y-8 p-8 animate-in fade-in duration-500">
+      <main className="mx-auto w-full max-w-2xl flex-1 space-y-8 p-4 sm:p-8 animate-in fade-in duration-500">
         <div className="space-y-2 text-center">
           <h1 className="text-4xl font-semibold tracking-tight">FrameBeat</h1>
           <p className="text-muted-foreground">Hola, @{profile.username}</p>
@@ -84,13 +84,29 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-8 p-8 text-center animate-in fade-in duration-500">
-      <div className="space-y-2">
-        <h1 className="text-4xl font-semibold tracking-tight">FrameBeat</h1>
-        <p className="text-muted-foreground">
+    <main className="flex flex-1 flex-col items-center justify-center gap-12 p-4 sm:p-8 text-center animate-in fade-in duration-500">
+      <div className="space-y-4 max-w-lg">
+        <h1 className="text-5xl font-semibold tracking-tight">FrameBeat</h1>
+        <p className="text-lg text-muted-foreground">
           Tu diario de lo que ves y escuchas
         </p>
       </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl w-full text-left">
+        <div className="border p-4 space-y-2">
+          <p className="text-xs uppercase tracking-wider text-amber-500 font-medium">Califica</p>
+          <p className="text-sm text-muted-foreground">Pon estrellas y escribe reseñas de películas y álbumes.</p>
+        </div>
+        <div className="border p-4 space-y-2">
+          <p className="text-xs uppercase tracking-wider text-amber-500 font-medium">Descubre</p>
+          <p className="text-sm text-muted-foreground">Ve dónde ver cada película en streaming en Perú.</p>
+        </div>
+        <div className="border p-4 space-y-2">
+          <p className="text-xs uppercase tracking-wider text-amber-500 font-medium">Comparte</p>
+          <p className="text-sm text-muted-foreground">Un feed compartido con lo que están viendo y escuchando.</p>
+        </div>
+      </div>
+
       <div className="flex gap-3">
         <Button variant="outline" asChild>
           <Link href="/login">Entrar</Link>

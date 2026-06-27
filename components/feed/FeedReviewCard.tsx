@@ -36,7 +36,7 @@ export function FeedReviewCard({
     >
       <Link
         href={href}
-        className="group relative size-16 shrink-0 overflow-hidden bg-muted"
+        className="group relative size-20 shrink-0 overflow-hidden bg-muted"
       >
         {posterUrl ? (
           <Image

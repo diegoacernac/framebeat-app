@@ -44,6 +44,11 @@ function RatingsGrid({
   );
 }
 
+function avg(items: RatingItem[]) {
+  if (!items.length) return null;
+  return items.reduce((sum, r) => sum + r.stars, 0) / items.length;
+}
+
 export function ProfileRatingsTabs({
   movieRatings,
   albumRatings,
@@ -51,8 +56,33 @@ export function ProfileRatingsTabs({
   movieRatings: RatingItem[];
   albumRatings: RatingItem[];
 }) {
+  const total = movieRatings.length + albumRatings.length;
+  const avgMovies = avg(movieRatings);
+  const avgAlbums = avg(albumRatings);
+
   return (
-    <Tabs defaultValue="movies">
+    <div className="space-y-6">
+      {total > 0 && (
+        <div className="flex flex-wrap gap-6 text-sm border-b pb-6">
+          <div>
+            <p className="text-2xl font-semibold">{total}</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">calificaciones</p>
+          </div>
+          {avgMovies !== null && (
+            <div>
+              <p className="text-2xl font-semibold text-amber-500">{avgMovies.toFixed(1)}<span className="text-base text-muted-foreground">/5</span></p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">prom. películas</p>
+            </div>
+          )}
+          {avgAlbums !== null && (
+            <div>
+              <p className="text-2xl font-semibold text-violet-400">{avgAlbums.toFixed(1)}<span className="text-base text-muted-foreground">/5</span></p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">prom. álbumes</p>
+            </div>
+          )}
+        </div>
+      )}
+      <Tabs defaultValue="movies">
       <TabsList>
         <TabsTrigger value="movies">
           Películas ({movieRatings.length})
@@ -78,5 +108,6 @@ export function ProfileRatingsTabs({
         />
       </TabsContent>
     </Tabs>
+    </div>
   );
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
 import { StarRating } from "../ratings/StarRatings";
+import { cn } from "@/lib/utils";
 
 type MemberRating = {
   userId: string;
@@ -52,58 +53,91 @@ export function ListItemRow({
   }
 
   const myRating = memberRatings.find((r) => r.userId === currentUserId);
+  const isPortrait = mediaType === "movie";
 
   return (
-    <article className="flex gap-4 border-b py-4">
-      <Link href={href} className="relative size-16 shrink-0 overflow-hidden bg-muted">
+    <article
+      className={cn(
+        "flex gap-4 border-b py-4 transition-opacity",
+        completed && "opacity-50"
+      )}
+    >
+      <Link
+        href={href}
+        className={cn(
+          "group relative shrink-0 self-start overflow-hidden bg-muted",
+          isPortrait ? "w-14 aspect-[2/3]" : "size-14"
+        )}
+      >
         {posterUrl ? (
-          <Image src={posterUrl} alt={title} fill className="object-cover" sizes="64px" />
+          <Image
+            src={posterUrl}
+            alt={title}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            sizes="48px"
+          />
         ) : (
           <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
             —
           </div>
         )}
       </Link>
+
       <div className="min-w-0 flex-1 space-y-2">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <Link href={href} className="font-medium hover:underline">
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+          <Link href={href} className="font-medium hover:underline leading-snug">
             {title}
           </Link>
           {averageStars !== null && (
-            <span className="text-xs text-muted-foreground">
-              Promedio: {averageStars.toFixed(1)} ★
+            <span className="shrink-0 text-sm font-medium text-amber-500">
+              ★ {averageStars.toFixed(1)}
             </span>
           )}
         </div>
-        <div className="space-y-1">
-          {memberRatings.map((r) => (
-            <div key={r.userId} className="text-xs">
-              <Link href={`/u/${r.username}`} className="font-medium hover:underline">
-                @{r.username}
-              </Link>
-              {": "}
-              <StarRating value={r.stars} readOnly size={14} />
-              {r.review && (
-                <p className="mt-0.5 text-muted-foreground line-clamp-2">{r.review}</p>
-              )}
+
+        {memberRatings.length > 0 ? (
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              {memberRatings.map((r) => (
+                <div key={r.userId} className="flex items-center gap-1.5">
+                  <Link
+                    href={`/u/${r.username}`}
+                    className="text-xs font-medium hover:underline"
+                  >
+                    @{r.username}
+                  </Link>
+                  <StarRating value={r.stars} readOnly size={11} />
+                </div>
+              ))}
             </div>
-          ))}
-          {memberRatings.length === 0 && (
-            <p className="text-xs text-muted-foreground">Nadie ha calificado aún.</p>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+            {memberRatings.some((r) => r.review) && (
+              <div className="space-y-0.5">
+                {memberRatings.filter((r) => r.review).map((r) => (
+                  <p key={r.userId} className="text-xs text-muted-foreground line-clamp-1">
+                    <span className="font-medium">@{r.username}:</span> {r.review}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">Nadie ha calificado aún.</p>
+        )}
+
+        <div className="flex flex-wrap items-center gap-2 pt-1">
           <Button
             type="button"
             size="sm"
             variant={completed ? "secondary" : "outline"}
             onClick={toggleCompleted}
+            className="h-7 text-xs"
           >
-            {completed ? "✓ Ya la vi" : "Marcar como vista"}
+            {completed ? "✓ Vista" : "Marcar como vista"}
           </Button>
           {!myRating && (
-            <Button size="sm" variant="ghost" asChild>
-              <Link href={href}>Calificar</Link>
+            <Button size="sm" variant="ghost" asChild className="h-7 text-xs">
+              <Link href={href}>Calificar →</Link>
             </Button>
           )}
         </div>

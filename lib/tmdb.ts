@@ -14,7 +14,7 @@ export type TmdbMovieDetail = TmdbMovieSearchResult & {
   backdrop_path: string | null;
   genres: { id: number; name: string }[];
   runtime: number;
-  tagLine: string | null;
+  tagline: string | null;
 };
 
 type TmdbSearchResponse = {
@@ -35,6 +35,16 @@ async function tmdbFetch<T>(path: string, params: Record<string, string> = {}): 
 export function getPosterUrl(path: string | null, size: "w185" | "w500" | "original" = "w500") {
   if (!path) return null;
   return `${TMDB_IMAGE_BASE}/${size}${path}`;
+}
+
+export function getBackdropUrl(path: string | null, size: "w780" | "w1280" | "original" = "w1280") {
+  if (!path) return null;
+  return `${TMDB_IMAGE_BASE}/${size}${path}`;
+}
+
+export async function getPopularMovies() {
+  const data = await tmdbFetch<TmdbSearchResponse>("/movie/popular");
+  return data.results;
 }
 
 export async function searchMovies(query: string) {

@@ -29,7 +29,7 @@ function ProviderList({
           return (
             <div
               key={p.provider_id}
-              className="flex flex-items-center gap-2 border px-2 py-1 text-xs"
+              className="flex items-center gap-2 border px-2 py-1 text-xs"
               title={p.provider_name}
             >
               {logo && (

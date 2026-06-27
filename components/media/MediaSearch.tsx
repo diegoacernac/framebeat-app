@@ -13,14 +13,18 @@ type MovieResult = {
   poster_path: string | null;
 };
 
-export function MediaSearch() {
+type Props = {
+  initialResults?: MovieResult[];
+};
+
+export function MediaSearch({ initialResults = [] }: Props) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<MovieResult[]>([]);
+  const [results, setResults] = useState<MovieResult[]>(initialResults);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!query.trim()) {
-      setResults([]);
+      setResults(initialResults);
       setLoading(false);
       return;
     }
@@ -39,6 +43,8 @@ export function MediaSearch() {
     return () => clearTimeout(timer);
   }, [query]);
 
+  const showingInitial = !query.trim() && initialResults.length > 0;
+
   return (
     <div className="space-y-6">
       <Input
@@ -46,6 +52,12 @@ export function MediaSearch() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
+
+      {showingInitial && (
+        <p className="text-xs uppercase tracking-wider text-muted-foreground">
+          Populares ahora
+        </p>
+      )}
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
         {loading ? (

@@ -30,7 +30,7 @@ export function StarRating({
           onClick={() => onChange?.(star)}
           onMouseEnter={() => !readOnly && setHovered(star)}
           className={cn(
-            "transition-transform duratoin-150 disabled:cursor-default",
+            "transition-transform duration-150 disabled:cursor-default",
             !readOnly && "hover:scale-110 active:scale-125"
           )}
         >

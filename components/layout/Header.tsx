@@ -15,31 +15,30 @@ type HeaderProps = {
 export function Header({ user, profile }: HeaderProps) {
   return (
     <header className="border-b">
-      <nav className="mx-auto flex max-w-4xl items-center justify-between gap-4 p-4">
-        <Link href="/" className="text-sm font-semibold tracking-tight">
+      <nav className="mx-auto flex max-w-4xl items-center justify-between gap-2 p-3 md:p-4">
+        <Link href="/" className="shrink-0 text-sm font-semibold tracking-tight">
           FrameBeat
         </Link>
-        <div className="flex flex-wrap items-center justify-end gap-1">
-          <Button variant="ghost" asChild>
+        <div className="flex items-center gap-0.5 overflow-x-auto">
+          <Button variant="ghost" size="sm" asChild>
             <Link href="/search">Buscar</Link>
           </Button>
           {user && profile ? (
             <>
-              <Button variant="ghost" asChild>
-                <Link href={`/u/${profile.username}`}>Mi perfil</Link>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href={`/u/${profile.username}`}>Perfil</Link>
               </Button>
-
-              <Button variant="ghost" asChild>
+              <Button variant="ghost" size="sm" asChild>
                 <Link href="/lists">Listas</Link>
               </Button>
               <LogoutButton />
             </>
           ) : (
             <>
-              <Button variant="ghost" asChild>
+              <Button variant="ghost" size="sm" asChild>
                 <Link href="/login">Entrar</Link>
               </Button>
-              <Button asChild>
+              <Button size="sm" asChild>
                 <Link href="/register">Registrarse</Link>
               </Button>
             </>

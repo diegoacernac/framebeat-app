@@ -15,6 +15,6 @@ export function LogoutButton() {
   }
 
   return (
-    <Button variant={"ghost"} onClick={handleLogout}>Cerrar sesión</Button>
+    <Button variant="ghost" size="sm" onClick={handleLogout}>Cerrar sesión</Button>
   );
 }
