@@ -1,10 +1,23 @@
+import { AlbumSearch } from "@/components/media/AlbumSearch";
 import { MediaSearch } from "@/components/media/MediaSearch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function SearchPage() {
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 p-8">
-      <h1 className="mb-6 text-2xl font-semibold">Buscar películas</h1>
-      <MediaSearch />
+      <h1 className="mb-6 text-2xl font-semibold">Buscar</h1>
+      <Tabs defaultValue="movies">
+        <TabsList>
+          <TabsTrigger value="movies">Películas</TabsTrigger>
+          <TabsTrigger value="albums">Álbumes</TabsTrigger>
+        </TabsList>
+        <TabsContent value="movies" className="mt-6">
+          <MediaSearch />
+        </TabsContent>
+        <TabsContent value="albums" className="mt-6">
+          <AlbumSearch />
+        </TabsContent>
+      </Tabs>
     </main>
   );
 }

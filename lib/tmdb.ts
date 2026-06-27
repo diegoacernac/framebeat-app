@@ -46,3 +46,38 @@ export async function searchMovies(query: string) {
 export async function getMovie(id: number) {
   return tmdbFetch<TmdbMovieDetail>(`/movie/${id}`);
 }
+
+export type WatchProvider = {
+  provider_id: number;
+  provider_name: string;
+  logo_path: string;
+  display_priority: number;
+};
+
+export type WatchProvidersByCountry = {
+  link: string;
+  flatrate?: WatchProvider[];
+  rent?: WatchProvider[];
+  buy?: WatchProvider[];
+};
+
+type TmdbWatchProvidersResponse = {
+  results: Record<string, WatchProvidersByCountry>;
+};
+
+export function getProviderLogoUrl(logoPath: string | null, size: "w45" | "w92" = "w45") {
+  if (!logoPath) return null;
+  return `${TMDB_IMAGE_BASE}/${size}${logoPath}`;
+}
+
+export async function getMovieWatchProviders(
+  movieId: number,
+  country = "PE"
+): Promise<WatchProvidersByCountry | null> {
+  const data = await tmdbFetch<TmdbWatchProvidersResponse>(
+    `/movie/${movieId}/watch/providers`
+  );
+  return data.results?.[country] ?? null;
+}
+
+

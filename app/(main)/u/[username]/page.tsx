@@ -1,8 +1,7 @@
 import { and, desc, eq } from "drizzle-orm";
-import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProfileRatingsTabs } from "@/components/profile/ProfileRatingsTabs";
 import { db } from "@/lib/db";
 import { mediaItems, profiles, ratings } from "@/lib/db/schema";
 
@@ -19,7 +18,7 @@ export default async function ProfilePage({
 
   if (!profile) notFound();
 
-  const userRatings = await db
+  const movieRatings = await db
     .select({
       stars: ratings.stars,
       title: mediaItems.title,
@@ -30,6 +29,20 @@ export default async function ProfilePage({
     .innerJoin(mediaItems, eq(ratings.mediaItemId, mediaItems.id))
     .where(
       and(eq(ratings.userId, profile.userId), eq(mediaItems.type, "movie"))
+    )
+    .orderBy(desc(ratings.createdAt));
+
+  const albumRatings = await db
+    .select({
+      stars: ratings.stars,
+      title: mediaItems.title,
+      posterUrl: mediaItems.posterUrl,
+      externalId: mediaItems.externalId,
+    })
+    .from(ratings)
+    .innerJoin(mediaItems, eq(ratings.mediaItemId, mediaItems.id))
+    .where(
+      and(eq(ratings.userId, profile.userId), eq(mediaItems.type, "album"))
     )
     .orderBy(desc(ratings.createdAt));
 
@@ -53,47 +66,10 @@ export default async function ProfilePage({
       </div>
       {profile.bio && <p className="text-sm">{profile.bio}</p>}
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">
-          {userRatings.length} película{userRatings.length !== 1 && "s"}{" "}
-          calificada{userRatings.length !== 1 && "s"}
-        </h2>
-        {userRatings.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Aún no hay calificaciones.
-          </p>
-        ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {userRatings.map((rating) => (
-              <Link
-                key={rating.externalId}
-                href={`/movies/${rating.externalId}`}
-                className="space-y-2"
-              >
-                {rating.posterUrl ? (
-                  <div className="relative aspect-[2/3] overflow-hidden bg-muted">
-                    <Image
-                      src={rating.posterUrl}
-                      alt={rating.title}
-                      fill
-                      className="object-cover"
-                      sizes="150px"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex aspect-[2/3] items-center justify-center bg-muted text-xs text-muted-foreground">
-                    Sin poster
-                  </div>
-                )}
-                <p className="line-clamp-2 text-sm font-medium">{rating.title}</p>
-                <p className="text-xs text-muted-foreground">
-                  {"★".repeat(rating.stars)}
-                </p>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
+      <ProfileRatingsTabs
+        movieRatings={movieRatings}
+        albumRatings={albumRatings}
+      />
     </main>
   );
 }

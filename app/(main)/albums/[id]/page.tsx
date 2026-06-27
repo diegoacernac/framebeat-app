@@ -2,26 +2,23 @@ import Image from "next/image";
 import Link from "next/link";
 import { eq, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { getMovie, getPosterUrl, getMovieWatchProviders } from "@/lib/tmdb";
+import { formatTrackDuration, getAlbum, getAlbumCoverUrl } from "@/lib/spotify";
 import { db } from "@/lib/db";
 import { mediaItems, ratings, profiles } from "@/lib/db/schema";
 import { createClient } from "@/lib/supabase/server";
 import { RatingForm } from "@/components/ratings/RatingForm";
 import { ReviewList } from "@/components/ratings/ReviewList";
-import { WatchProviders } from "../../../../components/movies/WatchProviders";
+import { Button } from "@/components/ui/button";
 
-export default async function MoviePage({
+export default async function AlbumPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const tmdbId = Number(id);
-  if (Number.isNaN(tmdbId)) notFound();
 
-  const movie = await getMovie(tmdbId).catch(() => null);
-  const watchProviders = await getMovieWatchProviders(tmdbId).catch(() => null);
-  if (!movie) notFound();
+  const album = await getAlbum(id).catch(() => null);
+  if (!album) notFound();
 
   const supabase = await createClient();
   const {
@@ -30,8 +27,8 @@ export default async function MoviePage({
 
   const mediaItem = await db.query.mediaItems.findFirst({
     where: and(
-      eq(mediaItems.type, "movie"),
-      eq(mediaItems.externalId, String(tmdbId))
+      eq(mediaItems.type, "album"),
+      eq(mediaItems.externalId, id)
     ),
   });
 
@@ -68,42 +65,60 @@ export default async function MoviePage({
     }
   }
 
-  const posterUrl = getPosterUrl(movie.poster_path);
-  const year = movie.release_date?.slice(0, 4);
+  const coverUrl = getAlbumCoverUrl(album.images);
+  const year = album.release_date?.slice(0, 4);
+  const artists = album.artists.map((a) => a.name).join(", ");
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 p-8">
       <div className="flex flex-col gap-8 md:flex-row">
-        {posterUrl && (
+        {coverUrl && (
           <Image
-            src={posterUrl}
-            alt={movie.title}
+            src={coverUrl}
+            alt={album.name}
             width={300}
-            height={450}
+            height={300}
             className="shrink-0"
           />
         )}
         <div className="space-y-4">
           <div>
-            <h1 className="text-3xl font-semibold">{movie.title}</h1>
-            {year && <p className="text-muted-foreground">{year}</p>}
+            <h1 className="text-3xl font-semibold">{album.name}</h1>
+            <p className="text-muted-foreground">{artists}</p>
+            {year && <p className="text-sm text-muted-foreground">{year}</p>}
           </div>
-          <p className="text-xs text-muted-foreground">
-            TMDB: {movie.vote_average.toFixed(1)}/10
+          <p className="text-sm text-muted-foreground">
+            {album.total_tracks} canciones
           </p>
-          <p>{movie.overview}</p>
-          <div className="flex flex-wrap gap-2">
-            {movie.genres.map((g) => (
-              <span key={g.id} className="border px-2 py-0.5 text-xs">
-                {g.name}
-              </span>
-            ))}
-          </div>
+          <Button asChild variant="outline">
+            <a
+              href={album.external_urls.spotify}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Escuchar en Spotify
+            </a>
+          </Button>
         </div>
       </div>
-      
-      <section className="mt-8">
-        <WatchProviders providers={watchProviders} />
+
+      <section className="mt-10 space-y-4">
+        <h2 className="text-xl font-semibold">Tracklist</h2>
+        <ul className="divide-y text-sm">
+          {album.tracks.items.map((track) => (
+            <li
+              key={track.track_number}
+              className="flex items-center justify-between py-2"
+            >
+              <span>
+                {track.track_number}. {track.name}
+              </span>
+              <span className="text-muted-foreground">
+                {formatTrackDuration(track.duration_ms)}
+              </span>
+            </li>
+          ))}
+        </ul>
       </section>
 
       {user ? (
@@ -111,14 +126,15 @@ export default async function MoviePage({
           <h2 className="text-xl font-semibold">Tu calificación</h2>
           <RatingForm
             key={userRating?.id ?? "new"}
-            mediaType="movie"
-            externalId={String(tmdbId)}
-            title={movie.title}
-            posterUrl={posterUrl}
+            mediaType="album"
+            externalId={id}
+            title={album.name}
+            posterUrl={coverUrl}
             metadata={{
-              overview: movie.overview,
+              artists: album.artists,
               year,
-              genres: movie.genres,
+              totalTracks: album.total_tracks,
+              spotifyUrl: album.external_urls.spotify,
             }}
             initialStars={userRating?.stars ?? 0}
             initialReview={userRating?.review}

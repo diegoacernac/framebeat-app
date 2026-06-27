@@ -28,6 +28,10 @@ export function Header({ user, profile }: HeaderProps) {
               <Button variant="ghost" asChild>
                 <Link href={`/u/${profile.username}`}>Mi perfil</Link>
               </Button>
+
+              <Button variant="ghost" asChild>
+                <Link href="/lists">Listas</Link>
+              </Button>
               <LogoutButton />
             </>
           ) : (

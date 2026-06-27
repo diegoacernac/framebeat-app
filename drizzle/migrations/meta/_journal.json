@@ -15,6 +15,13 @@
       "when": 1782431027505,
       "tag": "0001_amused_ultimatum",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782580885523,
+      "tag": "0002_hot_energizer",
+      "breakpoints": true
     }
   ]
 }

@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { StarRating } from "./StarRatings";
 
 type Props = {
-  tmdbId: number;
+  mediaType: "movie" | "album";
+  externalId: string;
   title: string;
   posterUrl: string | null;
   metadata: Record<string, unknown>;
@@ -17,7 +18,8 @@ type Props = {
 };
 
 export function RatingForm({
-  tmdbId,
+  mediaType,
+  externalId,
   title,
   posterUrl,
   metadata,
@@ -58,7 +60,7 @@ export function RatingForm({
       body: JSON.stringify(
         ratingId
           ? { stars, review }
-          : { tmdbId, title, posterUrl, metadata, stars, review }
+          : { mediaType, externalId, title, posterUrl, metadata, stars, review }
       ),
     });
 
@@ -71,6 +73,21 @@ export function RatingForm({
     }
 
     setSuccess(ratingId ? "Reseña actualizada" : "Reseña publicada");
+    router.refresh();
+  }
+
+  async function handleDelete() {
+    if (!ratingId || !confirm("¿Eliminar tu reseña?")) return;
+    setLoading(true);
+    const res = await fetch(`/api/ratings/${ratingId}`, {  method: "DELETE" });
+    setLoading(false);
+    if (!res.ok) {
+      setError("No se pudo eliminar la reseña");
+      return;
+    }
+    setStars(0);
+    setReview("");
+    setSuccess("Reseña eliminada");
     router.refresh();
   }
 
@@ -88,6 +105,11 @@ export function RatingForm({
       <Button type="submit" disabled={loading}>
         {loading ? "Guardando..." : ratingId ? "Actualizar" : "Publicar reseña"}
       </Button>
+      {ratingId && (
+        <Button type="button" variant="destructive" onClick={handleDelete} disabled={loading}>
+          {loading ? "Eliminando..." : "Eliminar reseña"}
+        </Button>
+      )}
     </form>
   );
 }

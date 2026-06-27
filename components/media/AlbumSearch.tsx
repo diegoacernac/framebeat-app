@@ -4,18 +4,19 @@ import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { MediaCard } from "./MediaCard";
 import { MediaCardSkeleton } from "./MediaCardSkeleton";
-import { getPosterUrl } from "@/lib/tmdb";
+import { getAlbumCoverUrl } from "@/lib/spotify";
 
-type MovieResult = {
-  id: number;
-  title: string;
+type AlbumResult = {
+  id: string;
+  name: string;
   release_date: string;
-  poster_path: string | null;
+  images: { url: string; width: number; height: number }[];
+  artists: { name: string }[];
 };
 
-export function MediaSearch() {
+export function AlbumSearch() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<MovieResult[]>([]);
+  const [results, setResults] = useState<AlbumResult[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -29,7 +30,7 @@ export function MediaSearch() {
 
     const timer = setTimeout(async () => {
       const res = await fetch(
-        `/api/movies/search?q=${encodeURIComponent(query)}`
+        `/api/albums/search?q=${encodeURIComponent(query)}`
       );
       const data = await res.json();
       setResults(data.results ?? []);
@@ -42,23 +43,24 @@ export function MediaSearch() {
   return (
     <div className="space-y-6">
       <Input
-        placeholder="Buscar películas..."
+        placeholder="Buscar álbumes..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
         {loading ? (
-          <MediaCardSkeleton />
+          <MediaCardSkeleton aspectRatio="square" />
         ) : (
-          results.map((movie, i) => (
+          results.map((album, i) => (
             <MediaCard
-              key={movie.id}
+              key={album.id}
               index={i}
-              href={`/movies/${movie.id}`}
-              title={movie.title}
-              subtitle={movie.release_date?.slice(0, 4)}
-              posterUrl={getPosterUrl(movie.poster_path, "w185")}
+              aspectRatio="square"
+              href={`/albums/${album.id}`}
+              title={album.name}
+              subtitle={album.artists.map((a) => a.name).join(", ")} 
+              posterUrl={getAlbumCoverUrl(album.images, "large")}
             />
           ))
         )}
@@ -66,7 +68,7 @@ export function MediaSearch() {
 
       {!loading && query.trim() && results.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          No se encontraron películas.
+          No se encontraron álbumes.
         </p>
       )}
     </div>
