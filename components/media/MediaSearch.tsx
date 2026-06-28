@@ -70,7 +70,7 @@ export function MediaSearch({ initialResults = [] }: Props) {
               href={`/movies/${movie.id}`}
               title={movie.title}
               subtitle={movie.release_date?.slice(0, 4)}
-              posterUrl={getPosterUrl(movie.poster_path, "w185")}
+              posterUrl={getPosterUrl(movie.poster_path, "w342")}
             />
           ))
         )}

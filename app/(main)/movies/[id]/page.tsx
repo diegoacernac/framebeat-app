@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { eq, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { getMovie, getPosterUrl, getBackdropUrl, getMovieWatchProviders } from "@/lib/tmdb";
+import { getMovie, getPosterUrl, getBackdropUrl, getMovieWatchProviders, getMovieCredits, getProfileUrl } from "@/lib/tmdb";
 import { db } from "@/lib/db";
 import { mediaItems, ratings, profiles } from "@/lib/db/schema";
 import { createClient } from "@/lib/supabase/server";
@@ -26,9 +26,13 @@ export default async function MoviePage({
   const tmdbId = Number(id);
   if (Number.isNaN(tmdbId)) notFound();
 
-  const movie = await getMovie(tmdbId).catch(() => null);
-  const watchProviders = await getMovieWatchProviders(tmdbId).catch(() => null);
+  const [movie, watchProviders, cast] = await Promise.all([
+    getMovie(tmdbId).catch(() => null),
+    getMovieWatchProviders(tmdbId).catch(() => null),
+    getMovieCredits(tmdbId).catch(() => []),
+  ]);
   if (!movie) notFound();
+  const topCast = cast.slice(0, 12);
 
   const supabase = await createClient();
   const {
@@ -142,6 +146,41 @@ export default async function MoviePage({
         <section className="mt-8">
           <WatchProviders providers={watchProviders} />
         </section>
+
+        {topCast.length > 0 && (
+          <section className="mt-8">
+            <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Reparto
+            </h2>
+            <div className="scrollbar-none flex gap-4 overflow-x-auto pb-2">
+              {topCast.map((actor) => (
+                <div key={actor.id} className="w-16 shrink-0 space-y-1.5">
+                  <div className="relative h-16 w-16 overflow-hidden rounded-full bg-muted">
+                    {actor.profile_path ? (
+                      <Image
+                        src={getProfileUrl(actor.profile_path)!}
+                        alt={actor.name}
+                        fill
+                        className="object-cover object-top"
+                        sizes="64px"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-muted-foreground text-lg">
+                        ?
+                      </div>
+                    )}
+                  </div>
+                  <p className="line-clamp-2 text-center text-xs font-medium leading-tight">
+                    {actor.name}
+                  </p>
+                  <p className="line-clamp-1 text-center text-xs text-muted-foreground">
+                    {actor.character}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {user ? (
           <section className="mt-10 space-y-4">

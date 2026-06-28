@@ -50,6 +50,11 @@ export function MediaCard({
             Sin poster
           </div>
         )}
+        {showStars !== undefined && showStars > 0 && (
+          <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/75 via-black/10 to-transparent p-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+            <span className="text-base text-amber-400">{"★".repeat(showStars)}</span>
+          </div>
+        )}
       </div>
 
       <div>

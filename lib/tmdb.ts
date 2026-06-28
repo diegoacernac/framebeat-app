@@ -32,7 +32,7 @@ async function tmdbFetch<T>(path: string, params: Record<string, string> = {}): 
   return res.json();
 }
 
-export function getPosterUrl(path: string | null, size: "w185" | "w500" | "original" = "w500") {
+export function getPosterUrl(path: string | null, size: "w185" | "w342" | "w500" | "original" = "w500") {
   if (!path) return null;
   return `${TMDB_IMAGE_BASE}/${size}${path}`;
 }
@@ -40,6 +40,24 @@ export function getPosterUrl(path: string | null, size: "w185" | "w500" | "origi
 export function getBackdropUrl(path: string | null, size: "w780" | "w1280" | "original" = "w1280") {
   if (!path) return null;
   return `${TMDB_IMAGE_BASE}/${size}${path}`;
+}
+
+export function getProfileUrl(path: string | null, size: "w45" | "w185" = "w185") {
+  if (!path) return null;
+  return `${TMDB_IMAGE_BASE}/${size}${path}`;
+}
+
+export type CastMember = {
+  id: number;
+  name: string;
+  character: string;
+  profile_path: string | null;
+  order: number;
+};
+
+export async function getMovieCredits(tmdbId: number) {
+  const data = await tmdbFetch<{ cast: CastMember[] }>(`/movie/${tmdbId}/credits`);
+  return data.cast;
 }
 
 export async function getPopularMovies() {
@@ -90,4 +108,56 @@ export async function getMovieWatchProviders(
   return data.results?.[country] ?? null;
 }
 
+export async function discoverMovies(filters: {
+  providers?: string[];
+  genres: string[];
+  acclaimed?: boolean;
+  decade?: string;
+  runtime?: string;
+  page?: number;
+  people?: number[];
+}) {
+  const params: Record<string, string> = {
+    sort_by: "popularity.desc",
+    "vote_count.gte": "80", // descartamos pelis muy desconocidas
+    watch_region: "PE",
+    page: String(filters.page ?? 1),
+  };
 
+  if (filters.providers?.length) {
+    //"|" en TMDB significa OR: disponible en Netflix o Disney o cualquiera que seleccionemos
+    params.with_watch_providers = filters.providers.join("|");
+  }
+  if (filters.genres?.length) {
+    params.with_genres = filters.genres.join("|");
+  }
+  if (filters.acclaimed) {
+    params["vote_average.gte"] = "7.5";
+    params["vote_count.gte"] = "300"; // más votos = más confiable el score
+  }
+
+  // Décadas → rango de fechas
+  const DECADES: Record<string, [string, string]> = {
+    "90s":   ["1990-01-01", "1999-12-31"],
+    "2000s": ["2000-01-01", "2009-12-31"],
+    "2010s": ["2010-01-01", "2019-12-31"],
+    "2020s": ["2020-01-01", "2029-12-31"],
+  };
+  if (filters.decade && DECADES[filters.decade]) {
+    const [gte, lte] = DECADES[filters.decade];
+    params["primary_release_date.gte"] = gte;
+    params["primary_release_date.lte"] = lte;
+  }
+
+  // Duración en minutos
+  if (filters.runtime === "short")  params["with_runtime.lte"] = "90";
+  if (filters.runtime === "normal") {
+    params["with_runtime.gte"] = "91";
+    params["with_runtime.lte"] = "130";
+  }
+  if (filters.runtime === "long")   params["with_runtime.gte"] = "131";
+  if (filters.people?.length) params.with_people = filters.people.join("|");
+
+  const data = await tmdbFetch<TmdbSearchResponse>("/discover/movie", params);
+  return data.results;
+}

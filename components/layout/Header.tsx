@@ -19,7 +19,7 @@ export function Header({ user, profile }: HeaderProps) {
         <Link href="/" className="shrink-0 text-sm font-semibold tracking-tight">
           FrameBeat
         </Link>
-        <div className="flex items-center gap-0.5 overflow-x-auto">
+        <div className="scrollbar-none flex items-center gap-0.5 overflow-x-auto">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/search">Buscar</Link>
           </Button>
@@ -30,6 +30,12 @@ export function Header({ user, profile }: HeaderProps) {
               </Button>
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/lists">Listas</Link>
+              </Button>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/discover">¿Qué vemos?</Link>
+              </Button>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/stats">Estadísticas</Link>
               </Button>
               <LogoutButton />
             </>

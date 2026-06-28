@@ -82,32 +82,12 @@ export function ProfileRatingsTabs({
           )}
         </div>
       )}
-      <Tabs defaultValue="movies">
-      <TabsList>
-        <TabsTrigger value="movies">
-          Películas ({movieRatings.length})
-        </TabsTrigger>
-        <TabsTrigger value="albums">
-          Álbumes ({albumRatings.length})
-        </TabsTrigger>
-      </TabsList>
-      <TabsContent value="movies" className="mt-4 space-y-4">
-        <RatingsGrid
-          items={movieRatings}
-          hrefPrefix="/movies"
-          aspectRatio="poster"
-          emptyMessage="Aún no hay películas calificadas."
-        />
-      </TabsContent>
-      <TabsContent value="albums" className="mt-4 space-y-4">
-        <RatingsGrid
-          items={albumRatings}
-          hrefPrefix="/albums"
-          aspectRatio="square"
-          emptyMessage="Aún no hay álbumes calificados."
-        />
-      </TabsContent>
-    </Tabs>
+      <RatingsGrid
+      items={movieRatings}
+      hrefPrefix="/movies"
+      aspectRatio="poster"
+      emptyMessage="Aún no hay películas calificadas."
+    />
     </div>
   );
 }
