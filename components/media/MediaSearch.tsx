@@ -15,9 +15,12 @@ type MovieResult = {
 
 type Props = {
   initialResults?: MovieResult[];
+  kind?: "movie" | "tv";
 };
 
-export function MediaSearch({ initialResults = [] }: Props) {
+export function MediaSearch({ initialResults = [], kind = "movie" }: Props) {
+  const searchUrl = kind === "tv" ? "/api/series/search" : "/api/movies/search";
+  const hrefBase = kind === "tv" ? "/series" : "/movies";
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<MovieResult[]>(initialResults);
   const [loading, setLoading] = useState(false);
@@ -33,7 +36,7 @@ export function MediaSearch({ initialResults = [] }: Props) {
 
     const timer = setTimeout(async () => {
       const res = await fetch(
-        `/api/movies/search?q=${encodeURIComponent(query)}`
+        `${searchUrl}?q=${encodeURIComponent(query)}`
       );
       const data = await res.json();
       setResults(data.results ?? []);
@@ -48,7 +51,7 @@ export function MediaSearch({ initialResults = [] }: Props) {
   return (
     <div className="space-y-6">
       <Input
-        placeholder="Buscar películas..."
+        placeholder={kind === "tv" ? "Buscar series..." : "Buscar películas..."}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
@@ -67,7 +70,7 @@ export function MediaSearch({ initialResults = [] }: Props) {
             <MediaCard
               key={movie.id}
               index={i}
-              href={`/movies/${movie.id}`}
+              href={`${hrefBase}/${movie.id}`}
               title={movie.title}
               subtitle={movie.release_date?.slice(0, 4)}
               posterUrl={getPosterUrl(movie.poster_path, "w342")}

@@ -145,7 +145,7 @@ export default async function ListsPage() {
 
                   {total === 0 && (
                     <p className="text-xs text-muted-foreground">
-                      {list.role === "owner" ? "Propietario" : "Miembro"} · sin películas aún
+                      {list.role === "owner" ? "Propietario" : "Miembro"} · sin contenido aún
                     </p>
                   )}
                 </Link>

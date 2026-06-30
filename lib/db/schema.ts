@@ -25,7 +25,7 @@ export const mediaItems = pgTable(
   "media_items",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    type: varchar("type", { length: 10 }).notNull().$type<"movie" | "album">(),
+    type: varchar("type", { length: 10 }).notNull().$type<"movie" | "album" | "tv">(),
     externalId: varchar("external_id", { length: 100 }).notNull(),
     title: varchar("title", { length: 500 }).notNull(),
     posterUrl: text("poster_url"),

@@ -21,6 +21,36 @@ type TmdbSearchResponse = {
   results: TmdbMovieSearchResult[];
 };
 
+export type TmdbSeason = {
+  id: number;
+  name: string;
+  overview: string;
+  air_date: string | null;
+  episode_count: number;
+  poster_path: string | null;
+  season_number: number;
+};
+
+export type TmdbTvSearchResult = {
+  id: number;
+  name: string;
+  first_air_date: string;
+  poster_path: string | null;
+  overview: string;
+  vote_average: number;
+};
+
+export type TmdbTvDetail = TmdbTvSearchResult & {
+  backdrop_path: string | null;
+  genres: { id: number; name: string }[];
+  number_of_seasons: number;
+  seasons: TmdbSeason[];
+};
+
+type TmdbTvSearchResponse = {
+  results: TmdbTvSearchResult[];
+};
+
 async function tmdbFetch<T>(path: string, params: Record<string, string> = {}): Promise<T> {
   const url = new URL(`${TMDB_BASE}${path}`);
   url.searchParams.set("api_key", process.env.TMDB_API_KEY!);
@@ -161,3 +191,29 @@ export async function discoverMovies(filters: {
   const data = await tmdbFetch<TmdbSearchResponse>("/discover/movie", params);
   return data.results;
 }
+
+export async function getPopularTv() {
+  const data = await tmdbFetch<TmdbTvSearchResponse>("/tv/popular");
+  return data.results;
+}
+
+export async function searchTv(query: string) {
+  if (!query.trim()) return [];
+  const data = await tmdbFetch<TmdbTvSearchResponse>("/search/tv", { query });
+  return data.results;
+}
+
+export async function getTv(id: number) {
+  return tmdbFetch<TmdbTvDetail>(`/tv/${id}`);
+}
+
+export async function getTvCredits(tvId: number) {
+  const data = await tmdbFetch<{ cast: CastMember[] }>(`/tv/${tvId}/credits`);
+  return data.cast;
+}
+
+export async function getTvWatchProviders(tvId: number, country = "PE") : Promise<WatchProvidersByCountry | null> {
+  const data = await tmdbFetch<TmdbWatchProvidersResponse>(`/tv/${tvId}/watch/providers`);
+  return data.results?.[country] ?? null;
+}
+

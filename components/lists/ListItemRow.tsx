@@ -20,7 +20,7 @@ type Props = {
   mediaItemId: string;
   title: string;
   posterUrl: string | null;
-  mediaType: "movie" | "album";
+  mediaType: "movie" | "album" | "tv";
   externalId: string;
   averageStars: number | null;
   memberRatings: MemberRating[];
@@ -41,7 +41,12 @@ export function ListItemRow({
   currentUserId,
 }: Props) {
   const router = useRouter();
-  const href = mediaType === "album" ? `/albums/${externalId}` : `/movies/${externalId}`;
+  const href =
+    mediaType === "album"
+      ? `/albums/${externalId}`
+      : mediaType === "tv"
+        ? `/series/${externalId}`
+        : `/movies/${externalId}`;
 
   async function toggleCompleted() {
     await fetch(`/api/lists/${listId}/progress`, {
@@ -53,7 +58,7 @@ export function ListItemRow({
   }
 
   const myRating = memberRatings.find((r) => r.userId === currentUserId);
-  const isPortrait = mediaType === "movie";
+  const isPortrait = mediaType !== "album";
 
   return (
     <article

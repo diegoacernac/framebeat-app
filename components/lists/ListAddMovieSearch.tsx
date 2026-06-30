@@ -14,12 +14,19 @@ type MovieResult = {
   overview: string;
 };
 
-export function ListAddMovieSearch({ listId }: { listId: string }) {
+type Props = {
+  listId: string;
+  kind?: "movie" | "tv";
+};
+
+export function ListAddMovieSearch({ listId, kind = "movie" }: Props) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<MovieResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [addingId, setAddingId] = useState<number | null>(null);
+
+  const searchUrl = kind === "tv" ? "/api/series/search" : "/api/movies/search";
 
   useEffect(() => {
     if (!query.trim()) {
@@ -29,14 +36,14 @@ export function ListAddMovieSearch({ listId }: { listId: string }) {
 
     setLoading(true);
     const timer = setTimeout(async () => {
-      const res = await fetch(`/api/movies/search?q=${encodeURIComponent(query)}`);
+      const res = await fetch(`${searchUrl}?q=${encodeURIComponent(query)}`);
       const data = await res.json();
       setResults(data.results ?? []);
       setLoading(false);
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, searchUrl]);
 
   async function addMovie(movie: MovieResult) {
     setAddingId(movie.id);
@@ -44,7 +51,7 @@ export function ListAddMovieSearch({ listId }: { listId: string }) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        mediaType: "movie",
+        mediaType: kind,
         externalId: String(movie.id),
         title: movie.title,
         posterUrl: getPosterUrl(movie.poster_path, "w185"),
@@ -63,7 +70,7 @@ export function ListAddMovieSearch({ listId }: { listId: string }) {
   return (
     <div className="space-y-3">
       <Input
-        placeholder="Buscar película para añadir..."
+        placeholder={kind === "tv" ? "Buscar serie para añadir..." : "Buscar película para añadir..."}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />

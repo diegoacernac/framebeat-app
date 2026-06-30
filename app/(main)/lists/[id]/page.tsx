@@ -151,11 +151,11 @@ export default async function ListDetailPage({
       {/* Items — primary content */}
       <section className="space-y-1">
         <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-          Películas ({totalCount})
+          Contenido ({totalCount})
         </h2>
         {totalCount === 0 ? (
           <p className="py-4 text-sm text-muted-foreground">
-            La lista está vacía. Añade películas abajo.
+            La lista está vacía. Añade películas o series abajo.
           </p>
         ) : (
           <div>
@@ -193,7 +193,14 @@ export default async function ListDetailPage({
         <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
           Añadir película
         </h2>
-        <ListAddMovieSearch listId={listId} />
+        <ListAddMovieSearch listId={listId} kind="movie" />
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+          Añadir serie
+        </h2>
+        <ListAddMovieSearch listId={listId} kind="tv" />
       </section>
 
       <section className="space-y-3">

@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { StarRating } from "./StarRatings";
 
 type Props = {
-  mediaType: "movie" | "album";
+  mediaType: "movie" | "album" | "tv";
   externalId: string;
   title: string;
   posterUrl: string | null;

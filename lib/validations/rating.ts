@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const createRatingSchema = z.object({
-  mediaType: z.enum(["movie", "album"]),
+  mediaType: z.enum(["movie", "album", "tv"]),
   externalId: z.string().min(1),
   title: z.string().min(1),
   posterUrl: z.string().nullable().optional(),

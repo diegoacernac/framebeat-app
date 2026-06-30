@@ -7,7 +7,7 @@ type Props = {
   username: string;
   title: string;
   href: string;
-  mediaType: "movie" | "album";
+  mediaType: "movie" | "album" | "tv";
   stars: number;
   review: string | null;
   posterUrl: string | null;
@@ -24,7 +24,8 @@ export function FeedReviewCard({
   posterUrl,
   index = 0,
 }: Props) {
-  const label = mediaType === "album" ? "Álbum" : "Película";
+  const label =
+    mediaType === "album" ? "Álbum" : mediaType === "tv" ? "Serie" : "Película";
 
   return (
     <article
