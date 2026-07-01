@@ -188,8 +188,12 @@ export async function discoverMovies(filters: {
   if (filters.runtime === "long")   params["with_runtime.gte"] = "131";
   if (filters.people?.length) params.with_people = filters.people.join("|");
 
-  const data = await tmdbFetch<TmdbSearchResponse>("/discover/movie", params);
-  return data.results;
+  const data = await tmdbFetch<TmdbSearchResponse & { total_pages: number }>(
+    "/discover/movie",
+    params
+  );
+  // TMDB nunca deja pedir más de la página 500, aunque diga que hay más.
+  return { results: data.results, totalPages: Math.min(data.total_pages, 500) };
 }
 
 export async function getPopularTv() {

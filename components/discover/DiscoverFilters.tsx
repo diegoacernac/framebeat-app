@@ -25,6 +25,8 @@ const MOODS = [
   { id: "suspenso", label: "Suspenso",       genres: ["53", "9648"] },
   { id: "scifi",    label: "Sci-Fi",         genres: ["878"] },
   { id: "romance",  label: "Romántica",      genres: ["10749", "18"] },
+  { id: "belica",     label: "Bélica",       genres: ["10752"] },
+  { id: "documental", label: "Documentales", genres: ["99"] },
 ];
 
 const DECADES = [
@@ -74,30 +76,33 @@ export function DiscoverFilters({
     });
   }
 
-  function buildParams(page = 1) {
+  function buildParams() {
     const p = new URLSearchParams();
     if (providers.size > 0) p.set("providers", [...providers].join(","));
     if (mood)      p.set("mood", mood);
     if (acclaimed) p.set("acclaimed", "1");
     if (decade)    p.set("decade", decade);
     if (runtime)   p.set("runtime", runtime);
-    if (page > 1)  p.set("page", String(page));
     if (people.length > 0) {
       // Guardamos "id:nombre" para poder reconstruir los chips al recargar
       p.set("people", people.map((p) => `${p.id}:${p.name}:${p.department}`).join(","));
     }
 
-    return p.toString();
+    return p;
   }
 
   function handleSearch() {
-    router.push(`/discover?${buildParams(1)}`);
+    router.push(`/discover?${buildParams().toString()}`);
   }
 
   function handleShuffle() {
-    // Math.floor(Math.random() * 4) da 0,1,2,3 → sumamos 2 para página 2-5
-    const randomPage = Math.floor(Math.random() * 4) + 2;
-    router.push(`/discover?${buildParams(randomPage)}`);
+    const p = buildParams();
+    p.set("shuffle", "1");
+    // Valor único para que la navegación se dispare aunque los filtros no
+    // hayan cambiado desde el último "Mezclar" — la página real la elige el
+    // server según cuántos resultados reales hay para estos filtros.
+    p.set("r", Math.random().toString(36).slice(2, 8));
+    router.push(`/discover?${p.toString()}`);
   }
 
   // Clase helper para no repetir la lógica de active/inactive en cada botón

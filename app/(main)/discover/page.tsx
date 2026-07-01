@@ -4,13 +4,15 @@ import { MediaCard } from "@/components/media/MediaCard";
 import { Person } from "../../../components/discover/PeopleSearch";
 
 const MOOD_GENRES: Record<string, string[]> = {
-  cenar:    ["35", "12"],
-  profunda: ["18", "36"],
-  reir:     ["35"],
-  accion:   ["28", "12"],
-  suspenso: ["53", "9648"],
-  scifi:    ["878"],
-  romance:  ["10749", "18"],
+  cenar:      ["35", "12"],
+  profunda:   ["18", "36"],
+  reir:       ["35"],
+  accion:     ["28", "12"],
+  suspenso:   ["53", "9648"],
+  scifi:      ["878"],
+  romance:    ["10749", "18"],
+  belica:     ["10752"],
+  documental: ["99"],
 };
 
 export default async function DiscoverPage({
@@ -24,6 +26,7 @@ export default async function DiscoverPage({
     runtime?: string;
     page?: string;
     people?: string;
+    shuffle?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -34,7 +37,7 @@ export default async function DiscoverPage({
   const acclaimed = params.acclaimed === "1";
   const decade = params.decade ?? "";
   const runtime = params.runtime ?? "";
-  const page = Number(params.page ?? "1");
+  const shuffle = params.shuffle === "1";
   // "123:Christopher Nolan:Directing,456:Tom Hanks:Acting"
   const peopleRaw = params.people ?? "";
   const people = peopleRaw
@@ -52,12 +55,34 @@ export default async function DiscoverPage({
     runtime !== "" ||
     people.length > 0;
 
-  const movies = hasFilters
-    ? await discoverMovies({ 
-        providers, genres, acclaimed, decade, runtime, page, 
-        people: people.map((p) => p.id),
-      })
-    : [];
+  const baseFilters = {
+    providers,
+    genres,
+    acclaimed,
+    decade,
+    runtime,
+    people: people.map((p) => p.id),
+  };
+
+  let movies: Awaited<ReturnType<typeof discoverMovies>>["results"] = [];
+
+  if (hasFilters) {
+    if (shuffle) {
+      // Primero preguntamos cuántas páginas hay realmente para estos filtros,
+      // así el azar respeta el pool real en vez de un rango fijo inventado.
+      const first = await discoverMovies({ ...baseFilters, page: 1 });
+      const maxPage = Math.min(first.totalPages, 20); // ~400 resultados como techo
+      const randomPage = Math.floor(Math.random() * maxPage) + 1;
+      const shuffled = await discoverMovies({ ...baseFilters, page: randomPage });
+      movies = shuffled.results;
+    } else {
+      const result = await discoverMovies({
+        ...baseFilters,
+        page: Number(params.page ?? "1"),
+      });
+      movies = result.results;
+    }
+  }
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-8 p-4 sm:p-8 animate-in fade-in duration-300">
