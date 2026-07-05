@@ -25,8 +25,10 @@ const MOODS = [
   { id: "suspenso", label: "Suspenso",       genres: ["53", "9648"] },
   { id: "scifi",    label: "Sci-Fi",         genres: ["878"] },
   { id: "romance",  label: "Romántica",      genres: ["10749", "18"] },
-  { id: "belica",     label: "Bélica",       genres: ["10752"] },
-  { id: "documental", label: "Documentales", genres: ["99"] },
+  { id: "belica",      label: "Bélica",        genres: ["10752"] },
+  { id: "documental",  label: "Documentales",  genres: ["99"] },
+  { id: "terror",      label: "Terror",        genres: ["27"] },
+  { id: "psicologica", label: "Psicológicas",  genres: ["53", "18"] },
 ];
 
 const DECADES = [

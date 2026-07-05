@@ -13,6 +13,8 @@ const MOOD_GENRES: Record<string, string[]> = {
   romance:    ["10749", "18"],
   belica:     ["10752"],
   documental: ["99"],
+  terror:      ["27"],
+  psicologica: ["53", "18"],
 };
 
 export default async function DiscoverPage({
