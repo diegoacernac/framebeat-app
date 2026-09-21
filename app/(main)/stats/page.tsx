@@ -294,7 +294,7 @@ export default async function StatsPage() {
       {!partnerProfile && myRatings.length === 0 && (
         <p className="mt-12 text-center text-sm text-muted-foreground">
           Aún no has calificado ninguna película.{" "}
-          <Link href="/search" className="text-amber-500 hover:underline">
+          <Link href="/" className="text-amber-500 hover:underline">
             Busca una para empezar.
           </Link>
         </p>

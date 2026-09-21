@@ -20,9 +20,6 @@ export function Header({ user, profile }: HeaderProps) {
           FrameBeat
         </Link>
         <div className="scrollbar-none flex items-center gap-0.5 overflow-x-auto">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/search">Buscar</Link>
-          </Button>
           {user && profile ? (
             <>
               <Button variant="ghost" size="sm" asChild>

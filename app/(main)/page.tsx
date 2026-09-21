@@ -6,6 +6,10 @@ import { ratings, mediaItems, profiles } from "@/lib/db/schema";
 import { createClient } from "@/lib/supabase/server";
 import { FeedReviewCard } from "@/components/feed/FeedReviewCard";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MediaSearch } from "@/components/media/MediaSearch";
+import { PersonMovieSearch } from "@/components/media/PersonMovieSearch";
+import { getPopularMovies, getPopularTv } from "@/lib/tmdb";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -14,44 +18,69 @@ export default async function HomePage() {
   } = await supabase.auth.getUser();
 
   if (user) {
-    const recentReviews = await db
-      .select({
-        stars: ratings.stars,
-        review: ratings.review,
-        createdAt: ratings.createdAt,
-        username: profiles.username,
-        title: mediaItems.title,
-        externalId: mediaItems.externalId,
-        mediaType: mediaItems.type,
-        posterUrl: mediaItems.posterUrl,
-      })
-      .from(ratings)
-      .innerJoin(mediaItems, eq(ratings.mediaItemId, mediaItems.id))
-      .innerJoin(profiles, eq(ratings.userId, profiles.userId))
-      .orderBy(desc(ratings.createdAt))
-      .limit(10);
-
     const profile = await db.query.profiles.findFirst({
       where: eq(profiles.userId, user.id),
     });
     if (!profile) redirect("/onboarding/username");
 
-    return (
-      <main className="mx-auto w-full max-w-2xl flex-1 space-y-8 p-4 sm:p-8 animate-in fade-in duration-500">
-        <div className="space-y-2 text-center">
-          <h1 className="text-4xl font-semibold tracking-tight">FrameBeat</h1>
-          <p className="text-muted-foreground">Hola, @{profile.username}</p>
-        </div>
+    const [popular, popularTv, recentReviews] = await Promise.all([
+      getPopularMovies().catch(() => []),
+      getPopularTv().catch(() => []),
+      db
+        .select({
+          stars: ratings.stars,
+          review: ratings.review,
+          createdAt: ratings.createdAt,
+          username: profiles.username,
+          title: mediaItems.title,
+          externalId: mediaItems.externalId,
+          mediaType: mediaItems.type,
+          posterUrl: mediaItems.posterUrl,
+        })
+        .from(ratings)
+        .innerJoin(mediaItems, eq(ratings.mediaItemId, mediaItems.id))
+        .innerJoin(profiles, eq(ratings.userId, profiles.userId))
+        .orderBy(desc(ratings.createdAt))
+        .limit(10),
+    ]);
 
-        {recentReviews.length > 0 ? (
-          <section className="space-y-4">
-            <h2 className="text-lg font-semibold">Últimas reseñas</h2>
+    const popularTvNormalized = popularTv.map((tv) => ({
+      id: tv.id,
+      title: tv.name,
+      release_date: tv.first_air_date,
+      poster_path: tv.poster_path,
+    }));
+
+    return (
+      <main className="mx-auto w-full max-w-4xl flex-1 space-y-10 p-4 sm:p-8 animate-in fade-in duration-500">
+        <Tabs defaultValue="title">
+          <TabsList>
+            <TabsTrigger value="title">Por título</TabsTrigger>
+            <TabsTrigger value="series">Series</TabsTrigger>
+            <TabsTrigger value="person">Por actor o director</TabsTrigger>
+          </TabsList>
+          <TabsContent value="title" className="mt-6">
+            <MediaSearch initialResults={popular} />
+          </TabsContent>
+          <TabsContent value="series" className="mt-6">
+            <MediaSearch kind="tv" initialResults={popularTvNormalized} />
+          </TabsContent>
+          <TabsContent value="person" className="mt-6">
+            <PersonMovieSearch />
+          </TabsContent>
+        </Tabs>
+
+        {recentReviews.length > 0 && (
+          <section className="space-y-4 border-t pt-8">
+            <h2 className="text-lg font-semibold">Actividad reciente</h2>
             <div className="space-y-4">
               {recentReviews.map((r, i) => {
                 const href =
                   r.mediaType === "album"
                     ? `/albums/${r.externalId}`
-                    : `/movies/${r.externalId}`;
+                    : r.mediaType === "tv"
+                      ? `/series/${r.externalId}`
+                      : `/movies/${r.externalId}`;
 
                 return (
                   <FeedReviewCard
@@ -69,15 +98,6 @@ export default async function HomePage() {
               })}
             </div>
           </section>
-        ) : (
-          <div className="space-y-4 text-center">
-            <p className="text-sm text-muted-foreground">
-              Aún no hay reseñas en la comunidad.
-            </p>
-            <Button asChild>
-              <Link href="/search">Buscar algo para calificar</Link>
-            </Button>
-          </div>
         )}
       </main>
     );

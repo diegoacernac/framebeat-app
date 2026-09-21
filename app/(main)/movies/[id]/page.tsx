@@ -144,7 +144,7 @@ export default async function MoviePage({
         </div>
 
         <section className="mt-8">
-          <WatchProviders providers={watchProviders} />
+          <WatchProviders providers={watchProviders} title={movie.title} />
         </section>
 
         {topCast.length > 0 && (

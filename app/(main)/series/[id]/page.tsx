@@ -143,7 +143,7 @@ export default async function SeriesPage({
         </div>
 
         <section className="mt-8">
-          <WatchProviders providers={watchProviders} />
+          <WatchProviders providers={watchProviders} title={tv.name} />
         </section>
 
         {topCast.length > 0 && (

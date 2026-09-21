@@ -4,12 +4,18 @@ import {
   type WatchProvider,
   type WatchProvidersByCountry,
 } from "@/lib/tmdb";
+import { getProviderLink } from "@/lib/watchLinks";
 
 function ProviderList({
-  title, providers,
+  title,
+  providers,
+  mediaTitle,
+  aggregateLink,
 }: {
   title: string;
   providers: WatchProvider[];
+  mediaTitle: string;
+  aggregateLink: string;
 }) {
   if (!providers.length) return null;
 
@@ -26,11 +32,15 @@ function ProviderList({
       <div className="flex flex-wrap gap-2">
         {sorted.map((p) => {
           const logo = getProviderLogoUrl(p.logo_path);
+          const href = getProviderLink(p.provider_id, mediaTitle, aggregateLink);
           return (
-            <div
+            <a
               key={p.provider_id}
-              className="flex items-center gap-2 border px-2 py-1 text-xs"
-              title={p.provider_name}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 border px-2 py-1 text-xs transition-colors hover:border-amber-500 hover:text-amber-500"
+              title={`Ver en ${p.provider_name}`}
             >
               {logo && (
                 <Image
@@ -42,7 +52,7 @@ function ProviderList({
                 />
               )}
               <span>{p.provider_name}</span>
-            </div>
+            </a>
           );
         })}
       </div>
@@ -52,8 +62,10 @@ function ProviderList({
 
 export function WatchProviders({
   providers,
+  title,
 }: {
   providers: WatchProvidersByCountry | null;
+  title: string;
 }) {
   if (!providers) {
     return (
@@ -79,9 +91,24 @@ export function WatchProviders({
   return (
     <section className="space-y-4">
       <h2 className="text-lg font-semibold">Disponible en Perú</h2>
-      <ProviderList title="Suscripción" providers={providers.flatrate ?? []} />
-      <ProviderList title="Alquiler" providers={providers.rent ?? []} />
-      <ProviderList title="Compra" providers={providers.buy ?? []} />
+      <ProviderList
+        title="Suscripción"
+        providers={providers.flatrate ?? []}
+        mediaTitle={title}
+        aggregateLink={providers.link}
+      />
+      <ProviderList
+        title="Alquiler"
+        providers={providers.rent ?? []}
+        mediaTitle={title}
+        aggregateLink={providers.link}
+      />
+      <ProviderList
+        title="Compra"
+        providers={providers.buy ?? []}
+        mediaTitle={title}
+        aggregateLink={providers.link}
+      />
       {providers.link && (
         <a 
           href={providers.link}
