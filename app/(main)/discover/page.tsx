@@ -1,26 +1,43 @@
-import { discoverMovies } from "@/lib/tmdb";
-import { parseDiscoverParams } from "@/lib/discover";
+import { discoverMedia } from "@/lib/tmdb";
+import { parseDiscoverParams, type DiscoverKind } from "@/lib/discover";
 import { DiscoverFilters } from "@/components/discover/DiscoverFilters";
 import { DiscoverResults } from "@/components/discover/DiscoverResults";
+import { createClient } from "@/lib/supabase/server";
+import { getPartnerUserIds } from "@/lib/lists";
+import { getSeenIds } from "@/lib/seen";
 
-type DiscoverFiltersInput = Omit<Parameters<typeof discoverMovies>[0], "page">;
-type DiscoverPageResult = Awaited<ReturnType<typeof discoverMovies>>;
+type DiscoverFiltersInput = Omit<Parameters<typeof discoverMedia>[0], "page">;
+type DiscoverPageResult = Awaited<ReturnType<typeof discoverMedia>>;
 
 // "Mezclar": elige una página al azar entre las que existen para estos filtros.
 // Primero preguntamos cuántas páginas hay realmente, así el azar respeta el
 // pool real en vez de un rango fijo inventado.
 async function discoverRandomPage(filters: DiscoverFiltersInput) {
-  const first = await discoverMovies({ ...filters, page: 1 });
+  const first = await discoverMedia({ ...filters, page: 1 });
   const maxPage = Math.min(first.totalPages, 20); // ~400 resultados como techo
   const page = Math.floor(Math.random() * maxPage) + 1;
-  const result = page === 1 ? first : await discoverMovies({ ...filters, page });
+  const result = page === 1 ? first : await discoverMedia({ ...filters, page });
   return { result, page };
+}
+
+// Lo que tú o tu pareja ya vieron (vacío si no hay sesión)
+async function getCoupleSeenIds(kind: DiscoverKind) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return new Set<string>();
+
+  const partners = await getPartnerUserIds(user.id);
+  return getSeenIds([user.id, ...partners], kind);
 }
 
 export default async function DiscoverPage({
   searchParams,
 }: {
   searchParams: Promise<{
+    type?: string;
+    avail?: string;
     providers?: string;
     mood?: string;
     acclaimed?: string;
@@ -33,24 +50,35 @@ export default async function DiscoverPage({
   }>;
 }) {
   const params = await searchParams;
-  const { filters, people, mood, hasFilters } = parseDiscoverParams(params);
+  const { kind, filters, people, mood, hasFilters } = parseDiscoverParams(params);
   const shuffle = params.shuffle === "1";
 
   let result: DiscoverPageResult | null = null;
   let startPage = 1;
+  let seenIds: string[] = [];
 
   if (hasFilters) {
-    if (shuffle) {
-      ({ result, page: startPage } = await discoverRandomPage(filters));
-    } else {
-      startPage = Math.max(1, Number(params.page) || 1);
-      result = await discoverMovies({ ...filters, page: startPage });
-    }
+    startPage = Math.max(1, Number(params.page) || 1);
+    // TMDB y "qué ya vieron" en paralelo: no dependen uno del otro
+    const [discovered, seen] = await Promise.all([
+      shuffle
+        ? discoverRandomPage(filters)
+        : discoverMedia({ ...filters, page: startPage }).then((r) => ({
+            result: r,
+            page: startPage,
+          })),
+      getCoupleSeenIds(kind),
+    ]);
+    result = discovered.result;
+    startPage = discovered.page;
+    seenIds = [...seen];
   }
 
   // Query string solo con los filtros: "Ver más" le suma &page=N
   const filterQuery = new URLSearchParams(
     Object.entries({
+      type: params.type,
+      avail: params.avail,
       providers: params.providers,
       mood: params.mood,
       acclaimed: params.acclaimed,
@@ -61,10 +89,14 @@ export default async function DiscoverPage({
   ).toString();
 
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 space-y-8 p-4 sm:p-8 animate-in fade-in duration-300">
+    // group/discover: mientras DiscoverFilters navega (data-pending), los
+    // resultados se atenúan vía CSS (ver DiscoverResults)
+    <main className="group/discover mx-auto w-full max-w-4xl flex-1 space-y-8 p-4 sm:p-8 animate-in fade-in duration-300">
       <h1 className="text-2xl font-semibold">¿Qué vemos?</h1>
 
       <DiscoverFilters
+        initialKind={kind}
+        initialAvailable={filters.available}
         initialProviders={filters.providers}
         initialMood={mood}
         initialAcclaimed={filters.acclaimed}
@@ -83,10 +115,12 @@ export default async function DiscoverPage({
           totalResults={result.totalResults}
           filterQuery={filterQuery}
           shuffled={shuffle}
+          seenIds={seenIds}
+          kind={kind}
         />
       ) : (
         <p className="text-sm text-muted-foreground">
-          Selecciona al menos una plataforma o situación para ver opciones.
+          Selecciona al menos una plataforma, situación o época para ver opciones.
         </p>
       )}
     </main>

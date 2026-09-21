@@ -113,11 +113,20 @@ export function BottomNav({ username }: { username: string }) {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex h-16 flex-col items-center justify-center gap-1 text-[10px] transition-colors",
+                  "group flex h-16 flex-col items-center justify-center gap-1 text-[10px] transition-colors",
                   active ? "text-amber-500" : "text-muted-foreground active:text-foreground"
                 )}
               >
-                <ItemIcon size={24} weight={active ? "fill" : "regular"} />
+                <ItemIcon
+                  size={24}
+                  weight={active ? "fill" : "regular"}
+                  // Pequeño "salto" al activarse y al tocar, para que se sienta táctil
+                  className={cn(
+                    "transition-transform duration-200 ease-out",
+                    active ? "scale-110" : "scale-100",
+                    "group-active:scale-90"
+                  )}
+                />
                 <span className="leading-none">{item.shortLabel}</span>
               </Link>
             </li>

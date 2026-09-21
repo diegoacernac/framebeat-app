@@ -9,6 +9,9 @@ import { createClient } from "@/lib/supabase/server";
 import { RatingForm } from "@/components/ratings/RatingForm";
 import { ReviewList } from "@/components/ratings/ReviewList";
 import { WatchProviders } from "../../../../components/movies/WatchProviders";
+import { AddToListButton } from "@/components/lists/AddToListButton";
+import { getUserListsWithMedia } from "@/lib/lists";
+import { getPersonDiscoverHref } from "@/lib/discover";
 
 function formatRuntime(minutes: number) {
   if (!minutes) return null;
@@ -26,13 +29,14 @@ export default async function MoviePage({
   const tmdbId = Number(id);
   if (Number.isNaN(tmdbId)) notFound();
 
-  const [movie, watchProviders, cast] = await Promise.all([
+  const [movie, watchProviders, credits] = await Promise.all([
     getMovie(tmdbId).catch(() => null),
     getMovieWatchProviders(tmdbId).catch(() => null),
-    getMovieCredits(tmdbId).catch(() => []),
+    getMovieCredits(tmdbId).catch(() => ({ cast: [], directors: [] })),
   ]);
   if (!movie) notFound();
-  const topCast = cast.slice(0, 12);
+  const topCast = credits.cast.slice(0, 12);
+  const directors = credits.directors;
 
   const supabase = await createClient();
   const {
@@ -78,6 +82,10 @@ export default async function MoviePage({
       userRating = dbRatings.find((r) => r.userId === user.id) ?? null;
     }
   }
+
+  const myLists = user
+    ? await getUserListsWithMedia(user.id, "movie", String(tmdbId))
+    : [];
 
   const posterUrl = getPosterUrl(movie.poster_path);
   const backdropUrl = getBackdropUrl(movie.backdrop_path);
@@ -127,6 +135,22 @@ export default async function MoviePage({
                   </span>
                 )}
               </div>
+              {directors.length > 0 && (
+                <p className="pt-1 text-sm text-muted-foreground">
+                  Dirigida por{" "}
+                  {directors.map((d, i) => (
+                    <span key={d.id}>
+                      {i > 0 && (i === directors.length - 1 ? " y " : ", ")}
+                      <Link
+                        href={getPersonDiscoverHref(d.id, d.name, "Directing")}
+                        className="font-medium text-foreground underline-offset-4 transition-colors hover:text-amber-500 hover:underline"
+                      >
+                        {d.name}
+                      </Link>
+                    </span>
+                  ))}
+                </p>
+              )}
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -140,6 +164,18 @@ export default async function MoviePage({
             <p className="text-sm leading-relaxed text-muted-foreground">
               {movie.overview}
             </p>
+
+            {user && (
+              <AddToListButton
+                lists={myLists}
+                mediaType="movie"
+                externalId={String(tmdbId)}
+                title={movie.title}
+                // Mismo tamaño que usa el buscador de la lista
+                posterUrl={getPosterUrl(movie.poster_path, "w185")}
+                metadata={{ overview: movie.overview, year }}
+              />
+            )}
           </div>
         </div>
 
@@ -154,14 +190,20 @@ export default async function MoviePage({
             </h2>
             <div className="scrollbar-none flex gap-4 overflow-x-auto pb-2">
               {topCast.map((actor) => (
-                <div key={actor.id} className="w-16 shrink-0 space-y-1.5">
-                  <div className="relative h-16 w-16 overflow-hidden rounded-full bg-muted">
+                // Tocar un actor → "¿Qué vemos?" con sus películas
+                <Link
+                  key={actor.id}
+                  href={getPersonDiscoverHref(actor.id, actor.name, "Acting")}
+                  title={`Ver películas de ${actor.name}`}
+                  className="group w-16 shrink-0 space-y-1.5"
+                >
+                  <div className="relative h-16 w-16 overflow-hidden rounded-full bg-muted ring-amber-500 ring-offset-2 ring-offset-background transition-shadow group-hover:ring-2">
                     {actor.profile_path ? (
                       <Image
                         src={getProfileUrl(actor.profile_path)!}
                         alt={actor.name}
                         fill
-                        className="object-cover object-top"
+                        className="object-cover object-top transition-transform duration-300 group-hover:scale-110"
                         sizes="64px"
                       />
                     ) : (
@@ -170,13 +212,13 @@ export default async function MoviePage({
                       </div>
                     )}
                   </div>
-                  <p className="line-clamp-2 text-center text-xs font-medium leading-tight">
+                  <p className="line-clamp-2 text-center text-xs font-medium leading-tight transition-colors group-hover:text-amber-500">
                     {actor.name}
                   </p>
                   <p className="line-clamp-1 text-center text-xs text-muted-foreground">
                     {actor.character}
                   </p>
-                </div>
+                </Link>
               ))}
             </div>
           </section>
@@ -186,7 +228,6 @@ export default async function MoviePage({
           <section className="mt-10 space-y-4">
             <h2 className="text-xl font-semibold">Tu calificación</h2>
             <RatingForm
-              key={userRating?.id ?? "new"}
               mediaType="movie"
               externalId={String(tmdbId)}
               title={movie.title}

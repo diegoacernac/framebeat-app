@@ -1,13 +1,27 @@
-import { and, desc, eq, inArray, ne } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { listMembers, mediaItems, profiles, ratings } from "@/lib/db/schema";
+import { mediaItems, profiles, ratings } from "@/lib/db/schema";
 import { createClient } from "@/lib/supabase/server";
+import { getPartnerUserIds } from "@/lib/lists";
+import { getMediaHref } from "@/lib/media";
 
 function avg(arr: number[]) {
   if (!arr.length) return 0;
   return arr.reduce((s, n) => s + n, 0) / arr.length;
+}
+
+// "3 películas · 2 temporadas" (omite lo que esté en 0)
+function breakdown(rs: { type: string }[]) {
+  const movies = rs.filter((r) => r.type === "movie").length;
+  const seasons = rs.filter((r) => r.type === "tv").length;
+  return [
+    movies > 0 && `${movies} ${movies === 1 ? "película" : "películas"}`,
+    seasons > 0 && `${seasons} ${seasons === 1 ? "temporada" : "temporadas"}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 export default async function StatsPage() {
@@ -21,28 +35,8 @@ export default async function StatsPage() {
     where: eq(profiles.userId, user.id),
   });
 
-  // Find partner via shared lists
-  const myMemberships = await db
-    .select({ listId: listMembers.listId })
-    .from(listMembers)
-    .where(eq(listMembers.userId, user.id));
-
-  const myListIds = myMemberships.map((m) => m.listId);
-
-  let partnerUserId: string | null = null;
-  if (myListIds.length > 0) {
-    const otherMembers = await db
-      .select({ userId: listMembers.userId })
-      .from(listMembers)
-      .where(
-        and(
-          inArray(listMembers.listId, myListIds),
-          ne(listMembers.userId, user.id)
-        )
-      );
-    const uniqueIds = [...new Set(otherMembers.map((m) => m.userId))];
-    partnerUserId = uniqueIds[0] ?? null;
-  }
+  // Pareja = quien comparte al menos una lista contigo
+  const [partnerUserId = null] = await getPartnerUserIds(user.id);
 
   const partnerProfile = partnerUserId
     ? await db.query.profiles.findFirst({
@@ -56,31 +50,25 @@ export default async function StatsPage() {
     title: mediaItems.title,
     posterUrl: mediaItems.posterUrl,
     externalId: mediaItems.externalId,
+    type: mediaItems.type,
   };
 
-  const [myRatings, partnerRatings] = await Promise.all([
-    db
+  // Películas y temporadas de series (los álbumes son otro mundo)
+  function ratingsOf(userId: string) {
+    return db
       .select(ratingFields)
       .from(ratings)
       .innerJoin(mediaItems, eq(ratings.mediaItemId, mediaItems.id))
-      .where(and(eq(ratings.userId, user.id), eq(mediaItems.type, "movie")))
-      .orderBy(desc(ratings.updatedAt)),
-    partnerUserId
-      ? db
-          .select(ratingFields)
-          .from(ratings)
-          .innerJoin(mediaItems, eq(ratings.mediaItemId, mediaItems.id))
-          .where(
-            and(
-              eq(ratings.userId, partnerUserId),
-              eq(mediaItems.type, "movie")
-            )
-          )
-          .orderBy(desc(ratings.updatedAt))
-      : Promise.resolve([]),
+      .where(and(eq(ratings.userId, userId), inArray(mediaItems.type, ["movie", "tv"])))
+      .orderBy(desc(ratings.updatedAt));
+  }
+
+  const [myRatings, partnerRatings] = await Promise.all([
+    ratingsOf(user.id),
+    partnerUserId ? ratingsOf(partnerUserId) : Promise.resolve([]),
   ]);
 
-  // Movies both users have rated
+  // Lo que ambos calificaron
   const commonMovies = myRatings
     .filter((a) => partnerRatings.some((b) => b.mediaItemId === a.mediaItemId))
     .map((a) => {
@@ -90,6 +78,7 @@ export default async function StatsPage() {
         title: a.title,
         posterUrl: a.posterUrl,
         externalId: a.externalId,
+        type: a.type,
         myStars: a.stars,
         partnerStars: b.stars,
         diff: Math.abs(a.stars - b.stars),
@@ -127,7 +116,10 @@ export default async function StatsPage() {
           <p className="mt-4 text-4xl font-bold text-amber-500">
             {myRatings.length}
           </p>
-          <p className="text-xs text-muted-foreground">películas calificadas</p>
+          <p className="text-xs text-muted-foreground">calificadas</p>
+          {myRatings.length > 0 && (
+            <p className="text-xs text-muted-foreground">{breakdown(myRatings)}</p>
+          )}
           {myRatings.length > 0 && (
             <p className="mt-2 text-sm text-amber-500">
               ★ {myAvg.toFixed(1)} promedio
@@ -145,9 +137,12 @@ export default async function StatsPage() {
               <p className="mt-4 text-4xl font-bold text-amber-500">
                 {partnerRatings.length}
               </p>
-              <p className="text-xs text-muted-foreground">
-                películas calificadas
-              </p>
+              <p className="text-xs text-muted-foreground">calificadas</p>
+              {partnerRatings.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {breakdown(partnerRatings)}
+                </p>
+              )}
               {partnerRatings.length > 0 && (
                 <p className="mt-2 text-sm text-amber-500">
                   ★ {partnerAvg.toFixed(1)} promedio
@@ -170,7 +165,9 @@ export default async function StatsPage() {
           </p>
           <p className="mt-2 text-4xl font-bold">{commonMovies.length}</p>
           <p className="text-xs text-muted-foreground">
-            películas calificadas en común
+            {commonMovies.length > 0
+              ? `calificadas en común · ${breakdown(commonMovies)}`
+              : "calificadas en común"}
           </p>
         </div>
       )}
@@ -183,7 +180,7 @@ export default async function StatsPage() {
           </p>
           <div className="flex items-start gap-4">
             {mostControversial.posterUrl && (
-              <Link href={`/movies/${mostControversial.externalId}`}>
+              <Link href={getMediaHref(mostControversial.type, mostControversial.externalId)}>
                 <img
                   src={mostControversial.posterUrl}
                   alt={mostControversial.title}
@@ -192,7 +189,7 @@ export default async function StatsPage() {
               </Link>
             )}
             <div>
-              <Link href={`/movies/${mostControversial.externalId}`}>
+              <Link href={getMediaHref(mostControversial.type, mostControversial.externalId)}>
                 <p className="font-semibold hover:underline">
                   {mostControversial.title}
                 </p>
@@ -223,7 +220,7 @@ export default async function StatsPage() {
 
       {mostControversial && mostControversial.diff === 0 && (
         <div className="mb-8 rounded-lg border bg-card p-5 text-center text-sm text-muted-foreground">
-          Todas las películas en común tienen el mismo rating. ¡Qué sintonía!
+          Todo lo que calificaron en común tiene el mismo rating. ¡Qué sintonía!
         </div>
       )}
 
@@ -238,7 +235,7 @@ export default async function StatsPage() {
               {myFavorites.map((m) => (
                 <Link
                   key={m.mediaItemId}
-                  href={`/movies/${m.externalId}`}
+                  href={getMediaHref(m.type, m.externalId)}
                   className="-mx-1 flex items-center gap-3 rounded p-1 hover:bg-muted/50"
                 >
                   {m.posterUrl && (
@@ -267,7 +264,7 @@ export default async function StatsPage() {
               {partnerFavorites.map((m) => (
                 <Link
                   key={m.mediaItemId}
-                  href={`/movies/${m.externalId}`}
+                  href={getMediaHref(m.type, m.externalId)}
                   className="-mx-1 flex items-center gap-3 rounded p-1 hover:bg-muted/50"
                 >
                   {m.posterUrl && (
@@ -292,7 +289,7 @@ export default async function StatsPage() {
 
       {!partnerProfile && myRatings.length === 0 && (
         <p className="mt-12 text-center text-sm text-muted-foreground">
-          Aún no has calificado ninguna película.{" "}
+          Aún no has calificado nada.{" "}
           <Link href="/" className="text-amber-500 hover:underline">
             Busca una para empezar.
           </Link>

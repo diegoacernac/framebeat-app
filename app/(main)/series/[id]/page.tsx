@@ -17,6 +17,8 @@ import { RatingForm } from "@/components/ratings/RatingForm";
 import { ReviewList } from "@/components/ratings/ReviewList";
 import { WatchProviders } from "@/components/movies/WatchProviders";
 import { SeasonPicker } from "@/components/series/SeasonPicker";
+import { AddToListButton } from "@/components/lists/AddToListButton";
+import { getUserListsWithMedia } from "@/lib/lists";
 
 export default async function SeriesPage({
   params,
@@ -82,6 +84,11 @@ export default async function SeriesPage({
     (s) => s.season_number === selectedSeasonNumber
   );
 
+  // En las listas se guarda la serie completa (externalId = tvId), no por temporada
+  const myLists = user
+    ? await getUserListsWithMedia(user.id, "tv", String(tvId))
+    : [];
+
   const posterUrl = getPosterUrl(tv.poster_path);
   const backdropUrl = getBackdropUrl(tv.backdrop_path);
   const year = tv.first_air_date?.slice(0, 4);
@@ -139,6 +146,17 @@ export default async function SeriesPage({
             <p className="text-sm leading-relaxed text-muted-foreground">
               {tv.overview}
             </p>
+
+            {user && (
+              <AddToListButton
+                lists={myLists}
+                mediaType="tv"
+                externalId={String(tvId)}
+                title={tv.name}
+                posterUrl={getPosterUrl(tv.poster_path, "w185")}
+                metadata={{ overview: tv.overview, year }}
+              />
+            )}
           </div>
         </div>
 
@@ -226,7 +244,7 @@ export default async function SeriesPage({
 
                 {user ? (
                   <RatingForm
-                    key={myRating?.id ?? externalId}
+                    key={externalId} // solo reinicia el formulario al cambiar de temporada
                     mediaType="tv"
                     externalId={externalId}
                     title={`${tv.name} — ${selectedSeason.name}`}

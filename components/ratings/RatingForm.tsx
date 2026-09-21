@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { StarRating } from "./StarRatings";
+import { CheckIcon } from "@phosphor-icons/react/dist/ssr";
+import { Spinner } from "@/components/ui/spinner";
 
 type Props = {
   mediaType: "movie" | "album" | "tv";
@@ -31,14 +33,16 @@ export function RatingForm({
   const [stars, setStars] = useState(initialStars);
   const [review, setReview] = useState(initialReview ?? "");
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  useEffect(() => {
-    setStars(initialStars);
-    setReview(initialReview ?? "");
-    setSuccess(null);
-  }, [initialStars, initialReview, ratingId]);
+  // No hace falta sincronizar initialStars/initialReview con un useEffect:
+  // tras guardar/eliminar, el estado local ya coincide con lo que trae el
+  // servidor. Y la página de series le pasa `key` por temporada, así que al
+  // cambiar de temporada React monta un formulario nuevo desde cero.
+  // (No usamos el id de la reseña como key: al publicar cambiaría y el
+  // formulario se re-montaría, perdiendo el mensaje "Reseña publicada".)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -78,9 +82,9 @@ export function RatingForm({
 
   async function handleDelete() {
     if (!ratingId || !confirm("¿Eliminar tu reseña?")) return;
-    setLoading(true);
+    setDeleting(true);
     const res = await fetch(`/api/ratings/${ratingId}`, {  method: "DELETE" });
-    setLoading(false);
+    setDeleting(false);
     if (!res.ok) {
       setError("No se pudo eliminar la reseña");
       return;
@@ -100,16 +104,49 @@ export function RatingForm({
         onChange={(e) => setReview(e.target.value)}
         rows={4}
       />
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      {success && <p className="text-sm text-muted-foreground">{success}</p>}
-      <Button type="submit" disabled={loading}>
-        {loading ? "Guardando..." : ratingId ? "Actualizar" : "Publicar reseña"}
+      {error && (
+        <p className="text-sm text-destructive animate-in fade-in duration-200">{error}</p>
+      )}
+      {success && (
+        <p
+          key={success}
+          role="status"
+          className="flex items-center gap-1.5 text-sm text-amber-500 animate-in fade-in slide-in-from-top-1 duration-300"
+        >
+          <CheckIcon size={14} weight="bold" /> {success}
+        </p>
+      )}
+      {/* Guardar y eliminar en la misma fila; eliminar a la derecha, lejos del pulgar */}
+      <div className="flex flex-wrap items-center gap-2">
+      <Button type="submit" disabled={loading || deleting}>
+        {loading ? (
+          <>
+            <Spinner /> Guardando...
+          </>
+        ) : ratingId ? (
+          "Actualizar"
+        ) : (
+          "Publicar reseña"
+        )}
       </Button>
       {ratingId && (
-        <Button type="button" variant="destructive" onClick={handleDelete} disabled={loading}>
-          {loading ? "Eliminando..." : "Eliminar reseña"}
+        <Button
+          type="button"
+          variant="destructive"
+          onClick={handleDelete}
+          disabled={loading || deleting}
+          className="ml-auto"
+        >
+          {deleting ? (
+            <>
+              <Spinner /> Eliminando...
+            </>
+          ) : (
+            "Eliminar reseña"
+          )}
         </Button>
       )}
+      </div>
     </form>
   );
 }

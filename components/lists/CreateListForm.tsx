@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
+import { Spinner } from "../ui/spinner";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { Label } from "../ui/label";
@@ -62,7 +63,13 @@ export function CreateListForm() {
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
       <Button type="submit" disabled={loading}>
-        {loading ? "Creando..." : "Crear lista"}
+        {loading ? (
+          <>
+            <Spinner /> Creando...
+          </>
+        ) : (
+          "Crear lista"
+        )}
       </Button>
     </form>
   );

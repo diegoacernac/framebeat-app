@@ -85,9 +85,21 @@ export type CastMember = {
   order: number;
 };
 
+type CrewMember = {
+  id: number;
+  name: string;
+  job: string;
+};
+
+// La misma respuesta trae reparto y equipo técnico: sacamos el director de ahí
 export async function getMovieCredits(tmdbId: number) {
-  const data = await tmdbFetch<{ cast: CastMember[] }>(`/movie/${tmdbId}/credits`);
-  return data.cast;
+  const data = await tmdbFetch<{ cast: CastMember[]; crew: CrewMember[] }>(
+    `/movie/${tmdbId}/credits`
+  );
+  return {
+    cast: data.cast,
+    directors: data.crew.filter((c) => c.job === "Director"),
+  };
 }
 
 export async function getPopularMovies() {
@@ -138,7 +150,19 @@ export async function getMovieWatchProviders(
   return data.results?.[country] ?? null;
 }
 
-export async function discoverMovies(filters: {
+// Qué cuenta como "tener dónde verla": suscripción, gratis, con anuncios,
+// alquiler o compra. (TMDB: "|" = cualquiera de estos)
+const ANY_MONETIZATION = "flatrate|free|ads|rent|buy";
+// Talk shows (10767) y noticieros (10763) llenan las series populares sin ser
+// "algo para ver juntos": los descartamos siempre
+const TV_EXCLUDED_GENRES = "10767|10763";
+
+// Descubrir películas o series con filtros. Las series se devuelven con la
+// misma forma que las películas (title, release_date) para que la UI no
+// tenga que distinguirlas.
+export async function discoverMedia(filters: {
+  kind?: "movie" | "tv";
+  available?: boolean;
   providers?: string[];
   genres: string[];
   genreMatch?: "any" | "all";
@@ -148,13 +172,18 @@ export async function discoverMovies(filters: {
   page?: number;
   people?: number[];
 }) {
+  const isTv = filters.kind === "tv";
   const params: Record<string, string> = {
     sort_by: "popularity.desc",
-    "vote_count.gte": "80", // descartamos pelis muy desconocidas
+    "vote_count.gte": "80", // descartamos títulos muy desconocidos
     watch_region: "PE",
     page: String(filters.page ?? 1),
   };
 
+  if (filters.available) {
+    // Solo lo que tiene al menos una forma de verse en Perú
+    params.with_watch_monetization_types = ANY_MONETIZATION;
+  }
   if (filters.providers?.length) {
     //"|" en TMDB significa OR: disponible en Netflix o Disney o cualquiera que seleccionemos
     params.with_watch_providers = filters.providers.join("|");
@@ -163,12 +192,13 @@ export async function discoverMovies(filters: {
     // "|" = OR (cualquiera de los géneros), "," = AND (todos a la vez)
     params.with_genres = filters.genres.join(filters.genreMatch === "all" ? "," : "|");
   }
+  if (isTv) params.without_genres = TV_EXCLUDED_GENRES;
   if (filters.acclaimed) {
     params["vote_average.gte"] = "7.5";
     params["vote_count.gte"] = "300"; // más votos = más confiable el score
   }
 
-  // Décadas → rango de fechas
+  // Décadas → rango de fechas (estreno en pelis, primera emisión en series)
   const DECADES: Record<string, [string, string]> = {
     "90s":   ["1990-01-01", "1999-12-31"],
     "2000s": ["2000-01-01", "2009-12-31"],
@@ -177,27 +207,51 @@ export async function discoverMovies(filters: {
   };
   if (filters.decade && DECADES[filters.decade]) {
     const [gte, lte] = DECADES[filters.decade];
-    params["primary_release_date.gte"] = gte;
-    params["primary_release_date.lte"] = lte;
+    const dateField = isTv ? "first_air_date" : "primary_release_date";
+    params[`${dateField}.gte`] = gte;
+    params[`${dateField}.lte`] = lte;
   }
 
-  // Duración en minutos
-  if (filters.runtime === "short")  params["with_runtime.lte"] = "90";
-  if (filters.runtime === "normal") {
-    params["with_runtime.gte"] = "91";
-    params["with_runtime.lte"] = "130";
+  // Duración y personas: solo películas (TMDB no filtra series por persona)
+  if (!isTv) {
+    if (filters.runtime === "short")  params["with_runtime.lte"] = "90";
+    if (filters.runtime === "normal") {
+      params["with_runtime.gte"] = "91";
+      params["with_runtime.lte"] = "130";
+    }
+    if (filters.runtime === "long")   params["with_runtime.gte"] = "131";
+    if (filters.people?.length) params.with_people = filters.people.join("|");
   }
-  if (filters.runtime === "long")   params["with_runtime.gte"] = "131";
-  if (filters.people?.length) params.with_people = filters.people.join("|");
 
-  const data = await tmdbFetch<
-    TmdbSearchResponse & { total_pages: number; total_results: number }
-  >("/discover/movie", params);
+  type Paged<T> = { results: T[]; total_pages: number; total_results: number };
+  let results: TmdbMovieSearchResult[];
+  let totalPages: number;
+  let totalResults: number;
+
+  if (isTv) {
+    const data = await tmdbFetch<Paged<TmdbTvSearchResult>>("/discover/tv", params);
+    results = data.results.map((tv) => ({
+      id: tv.id,
+      title: tv.name,
+      release_date: tv.first_air_date,
+      poster_path: tv.poster_path,
+      overview: tv.overview,
+      vote_average: tv.vote_average,
+    }));
+    totalPages = data.total_pages;
+    totalResults = data.total_results;
+  } else {
+    const data = await tmdbFetch<Paged<TmdbMovieSearchResult>>("/discover/movie", params);
+    results = data.results;
+    totalPages = data.total_pages;
+    totalResults = data.total_results;
+  }
+
   // TMDB nunca deja pedir más de la página 500, aunque diga que hay más.
   return {
-    results: data.results,
-    totalPages: Math.min(data.total_pages, 500),
-    totalResults: data.total_results,
+    results,
+    totalPages: Math.min(totalPages, 500),
+    totalResults,
   };
 }
 

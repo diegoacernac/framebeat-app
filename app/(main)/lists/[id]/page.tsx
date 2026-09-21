@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "../../../../lib/db";
 import {
   listItemProgress,
@@ -15,6 +15,10 @@ import { createClient } from "../../../../lib/supabase/server";
 import { InviteMemberForm } from "@/components/lists/InviteMemberForm";
 import { ListAddMovieSearch } from "@/components/lists/ListAddMovieSearch";
 import { ListItemRow } from "@/components/lists/ListItemRow";
+import { DeleteListButton } from "@/components/lists/DeleteListButton";
+import { RandomPickButton } from "@/components/lists/RandomPickButton";
+import { CaretRightIcon } from "@phosphor-icons/react/dist/ssr";
+import { getMediaHref } from "@/lib/media";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default async function ListDetailPage({
@@ -65,7 +69,9 @@ export default async function ListDetailPage({
     })
     .from(listItems)
     .innerJoin(mediaItems, eq(listItems.mediaItemId, mediaItems.id))
-    .where(eq(listItems.listId, listId));
+    .where(eq(listItems.listId, listId))
+    // Orden estable: sin orderBy, Postgres puede devolverlos en cualquier orden
+    .orderBy(asc(listItems.createdAt));
 
   const memberUserIds = members.map((m) => m.userId);
   const mediaItemIds = items.map((i) => i.mediaItemId);
@@ -111,6 +117,35 @@ export default async function ListDetailPage({
       ? allRatings.reduce((sum, r) => sum + r.stars, 0) / allRatings.length
       : null;
 
+  // "Vista" es por usuario: cada uno ve sus propias pendientes
+  const userId = user.id;
+  const pendingItems = items.filter((i) => !completedSet.has(i.mediaItemId));
+  const watchedItems = items.filter((i) => completedSet.has(i.mediaItemId));
+
+  function renderRow(item: (typeof items)[number]) {
+    const itemRatings = allRatings.filter((r) => r.mediaItemId === item.mediaItemId);
+    const averageStars =
+      itemRatings.length > 0
+        ? itemRatings.reduce((sum, r) => sum + r.stars, 0) / itemRatings.length
+        : null;
+    return (
+      <ListItemRow
+        key={item.listItemId}
+        listId={listId}
+        listItemId={item.listItemId}
+        mediaItemId={item.mediaItemId}
+        title={item.title}
+        posterUrl={item.posterUrl}
+        mediaType={item.mediaType}
+        externalId={item.externalId}
+        averageStars={averageStars}
+        memberRatings={itemRatings}
+        completed={completedSet.has(item.mediaItemId)}
+        currentUserId={userId}
+      />
+    );
+  }
+
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 space-y-8 p-4 sm:p-8 animate-in fade-in duration-300">
       {/* Header */}
@@ -149,44 +184,54 @@ export default async function ListDetailPage({
       )}
 
       {/* Items — primary content */}
-      <section className="space-y-1">
-        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-          Contenido ({totalCount})
-        </h2>
-        {totalCount === 0 ? (
-          <p className="py-4 text-sm text-muted-foreground">
-            La lista está vacía. Añade películas o series abajo.
-          </p>
-        ) : (
-          <div>
-            {items.map((item) => {
-              const itemRatings = allRatings.filter(
-                (r) => r.mediaItemId === item.mediaItemId
-              );
-              const averageStars =
-                itemRatings.length > 0
-                  ? itemRatings.reduce((sum, r) => sum + r.stars, 0) / itemRatings.length
-                  : null;
-              return (
-                <ListItemRow
-                  key={item.listItemId}
-                  listId={listId}
-                  listItemId={item.listItemId}
-                  mediaItemId={item.mediaItemId}
-                  title={item.title}
-                  posterUrl={item.posterUrl}
-                  mediaType={item.mediaType}
-                  externalId={item.externalId}
-                  averageStars={averageStars}
-                  memberRatings={itemRatings}
-                  completed={completedSet.has(item.mediaItemId)}
-                  currentUserId={user.id}
+      {totalCount === 0 ? (
+        <p className="py-4 text-sm text-muted-foreground">
+          La lista está vacía. Añade películas o series abajo.
+        </p>
+      ) : (
+        <>
+          {/* Por ver — lo principal */}
+          <section className="space-y-3">
+            <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+              Por ver ({pendingItems.length})
+            </h2>
+
+            {pendingItems.length >= 2 && (
+              <RandomPickButton
+                candidates={pendingItems.map((i) => ({
+                  listItemId: i.listItemId,
+                  title: i.title,
+                  posterUrl: i.posterUrl,
+                  href: getMediaHref(i.mediaType, i.externalId),
+                }))}
+              />
+            )}
+
+            {pendingItems.length === 0 ? (
+              <p className="py-2 text-sm text-muted-foreground animate-in fade-in duration-300">
+                ¡Ya viste todo! Añade más abajo.
+              </p>
+            ) : (
+              <div>{pendingItems.map(renderRow)}</div>
+            )}
+          </section>
+
+          {/* Vistas — plegadas para no estorbar */}
+          {watchedItems.length > 0 && (
+            <details className="group" open={pendingItems.length === 0}>
+              <summary className="flex cursor-pointer list-none items-center gap-1.5 text-sm font-medium uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground [&::-webkit-details-marker]:hidden">
+                <CaretRightIcon
+                  size={12}
+                  weight="bold"
+                  className="transition-transform duration-200 group-open:rotate-90"
                 />
-              );
-            })}
-          </div>
-        )}
-      </section>
+                Vistas ({watchedItems.length})
+              </summary>
+              <div className="mt-1">{watchedItems.map(renderRow)}</div>
+            </details>
+          )}
+        </>
+      )}
 
       {/* Management — secondary */}
       <section className="space-y-3 border-t pt-6">
@@ -225,6 +270,15 @@ export default async function ListDetailPage({
         </ul>
         <InviteMemberForm listId={listId} />
       </section>
+
+      {membership.role === "owner" && (
+        <section className="space-y-3 border-t pt-6">
+          <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+            Zona de peligro
+          </h2>
+          <DeleteListButton listId={listId} title={list.title} />
+        </section>
+      )}
     </main>
   );
 }

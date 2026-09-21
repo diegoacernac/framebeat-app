@@ -10,6 +10,8 @@ type Props = {
   index?: number;
   aspectRatio?: "poster" | "square";
   showStars?: number;
+  // Marca "✓ Vista" (en ¿Qué vemos?: alguno de los dos ya la vio)
+  seen?: boolean;
 };
 
 export function MediaCard({
@@ -20,6 +22,7 @@ export function MediaCard({
   index = 0,
   aspectRatio = "poster",
   showStars,
+  seen = false,
 }: Props) {
   return (
     <Link
@@ -42,13 +45,22 @@ export function MediaCard({
             src={posterUrl}
             alt={title}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className={cn(
+              "object-cover transition-[transform,opacity] duration-300 group-hover:scale-105",
+              // Atenuada, pero vuelve a opacidad completa al pasar el mouse
+              seen && "opacity-40 group-hover:opacity-100"
+            )}
             sizes="150px"
           />
         ) : (
           <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
             Sin poster
           </div>
+        )}
+        {seen && (
+          <span className="absolute left-1.5 top-1.5 flex items-center gap-0.5 bg-black/75 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">
+            ✓ Vista
+          </span>
         )}
         {showStars !== undefined && showStars > 0 && (
           <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/75 via-black/10 to-transparent p-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100">

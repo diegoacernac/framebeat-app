@@ -78,7 +78,7 @@ export default async function ListsPage() {
         </p>
       ) : (
         <ul className="space-y-3">
-          {lists.map((list) => {
+          {lists.map((list, i) => {
             const items = itemsByList[list.id] ?? [];
             const completed = completedByList[list.id] ?? new Set();
             const total = items.length;
@@ -87,10 +87,15 @@ export default async function ListsPage() {
             const previews = items.slice(0, 5);
 
             return (
-              <li key={list.id}>
+              <li
+                key={list.id}
+                // Entrada escalonada, igual que los pósters del buscador y el feed
+                className="animate-in fade-in slide-in-from-bottom-2 fill-mode-both duration-300"
+                style={{ animationDelay: `${i * 50}ms` }}
+              >
                 <Link
                   href={`/lists/${list.id}`}
-                  className="block border p-4 space-y-3 transition-colors hover:bg-muted/30"
+                  className="block border p-4 space-y-3 transition-colors hover:border-amber-500/40 hover:bg-muted/30 active:bg-muted/50"
                 >
                   {previews.length > 0 && (
                     <div className="flex gap-1">

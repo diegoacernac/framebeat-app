@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
+import { CheckIcon } from "@phosphor-icons/react/dist/ssr";
 
 export function InviteMemberForm({ listId }: { listId: string }) {
   const router = useRouter();
@@ -48,11 +50,24 @@ export function InviteMemberForm({ listId }: { listId: string }) {
         className="max-w-xs"
       />
       <Button type="submit" disabled={loading}>
-        {loading ? "Invitando..." : "Invitar"}
+        {loading ? (
+          <>
+            <Spinner /> Invitando...
+          </>
+        ) : (
+          "Invitar"
+        )}
       </Button>
-      {error && <p className="w-full text-sm text-destructive">{error}</p>}
+      {error && (
+        <p className="w-full text-sm text-destructive animate-in fade-in duration-200">{error}</p>
+      )}
       {success && (
-        <p className="w-full text-sm text-muted-foreground">{success}</p>
+        <p
+          role="status"
+          className="flex w-full items-center gap-1.5 text-sm text-amber-500 animate-in fade-in slide-in-from-top-1 duration-300"
+        >
+          <CheckIcon size={14} weight="bold" /> {success}
+        </p>
       )}
     </form>
   );

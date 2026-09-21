@@ -125,7 +125,6 @@ export default async function AlbumPage({
         <section className="mt-10 space-y-4">
           <h2 className="text-xl font-semibold">Tu calificación</h2>
           <RatingForm
-            key={userRating?.id ?? "new"}
             mediaType="album"
             externalId={id}
             title={album.name}

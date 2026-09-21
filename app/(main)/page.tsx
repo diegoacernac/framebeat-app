@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MediaSearch } from "@/components/media/MediaSearch";
 import { PersonMovieSearch } from "@/components/media/PersonMovieSearch";
 import { getPopularMovies, getPopularTv } from "@/lib/tmdb";
+import { getMediaHref } from "@/lib/media";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -75,12 +76,7 @@ export default async function HomePage() {
             <h2 className="text-lg font-semibold">Actividad reciente</h2>
             <div className="space-y-4">
               {recentReviews.map((r, i) => {
-                const href =
-                  r.mediaType === "album"
-                    ? `/albums/${r.externalId}`
-                    : r.mediaType === "tv"
-                      ? `/series/${r.externalId}`
-                      : `/movies/${r.externalId}`;
+                const href = getMediaHref(r.mediaType, r.externalId);
 
                 return (
                   <FeedReviewCard
