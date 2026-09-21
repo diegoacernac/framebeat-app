@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { PeopleSearch, type Person } from "@/components/discover/PeopleSearch";
 import { MediaCard } from "./MediaCard";
 import { MediaCardSkeleton } from "./MediaCardSkeleton";
@@ -17,21 +17,40 @@ export function PersonMovieSearch() {
   const [person, setPerson] = useState<Person | null>(null);
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  // Cancela la petición anterior si se elige otra persona antes de que responda
+  const abortRef = useRef<AbortController | null>(null);
 
   async function handleChange(people: Person[]) {
+    abortRef.current?.abort();
+
     if (people.length === 0) {
       setPerson(null);
       setMovies([]);
+      setLoading(false);
+      setError(false);
       return;
     }
 
     const selected = people[people.length - 1];
+    const controller = new AbortController();
+    abortRef.current = controller;
     setPerson(selected);
     setLoading(true);
+    setError(false);
 
-    const res = await fetch(`/api/people/${selected.id}/movies`);
-    const data = await res.json();
-    setMovies(data.movies ?? []);
+    try {
+      const res = await fetch(`/api/people/${selected.id}/movies`, {
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setMovies(data.movies ?? []);
+    } catch {
+      if (controller.signal.aborted) return;
+      setMovies([]);
+      setError(true);
+    }
     setLoading(false);
   }
 
@@ -42,7 +61,13 @@ export function PersonMovieSearch() {
         onChange={handleChange}
       />
 
-      {person && !loading && (
+      {person && !loading && error && (
+        <p className="text-sm text-destructive">
+          No se pudo cargar la filmografía. Intenta de nuevo.
+        </p>
+      )}
+
+      {person && !loading && !error && (
         <p className="text-xs text-muted-foreground">
           Filmografía de{" "}
           <span className="font-medium text-foreground">{person.name}</span>

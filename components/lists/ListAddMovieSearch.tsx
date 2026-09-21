@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useDebouncedFetch } from "@/hooks/useDebouncedFetch";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { getPosterUrl } from "../../lib/tmdb";
@@ -22,28 +23,14 @@ type Props = {
 export function ListAddMovieSearch({ listId, kind = "movie" }: Props) {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<MovieResult[]>([]);
-  const [loading, setLoading] = useState(false);
   const [addingId, setAddingId] = useState<number | null>(null);
 
   const searchUrl = kind === "tv" ? "/api/series/search" : "/api/movies/search";
-
-  useEffect(() => {
-    if (!query.trim()) {
-      setResults([]);
-      return;
-    }
-
-    setLoading(true);
-    const timer = setTimeout(async () => {
-      const res = await fetch(`${searchUrl}?q=${encodeURIComponent(query)}`);
-      const data = await res.json();
-      setResults(data.results ?? []);
-      setLoading(false);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [query, searchUrl]);
+  const trimmed = query.trim();
+  const { data, loading, error } = useDebouncedFetch<{ results?: MovieResult[] }>(
+    trimmed ? `${searchUrl}?q=${encodeURIComponent(trimmed)}` : null
+  );
+  const results = data?.results ?? [];
 
   async function addMovie(movie: MovieResult) {
     setAddingId(movie.id);
@@ -62,7 +49,6 @@ export function ListAddMovieSearch({ listId, kind = "movie" }: Props) {
 
     if (res.ok) {
       setQuery("");
-      setResults([]);
       router.refresh();
     }
   }
@@ -75,6 +61,9 @@ export function ListAddMovieSearch({ listId, kind = "movie" }: Props) {
         onChange={(e) => setQuery(e.target.value)}
       />
       {loading && <p className="text-xs text-muted-foreground">Buscando...</p>}
+      {!loading && error && (
+        <p className="text-xs text-destructive">No se pudo buscar. Intenta de nuevo.</p>
+      )}
       <ul className="space-y-2">
         {results.map((movie) => (
           <li

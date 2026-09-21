@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 jw.py \"Red White & Blue\" MX ES BR CO CL AR)",
+      "Bash(grep -E '\\\\.\\(tsx?|css\\)$')",
+      "Bash(sed -i '' -E 's/getPosterUrl\\\\\\(\\([a-zA-Z.]+\\)\\\\.posterUrl, \"w185\"\\\\\\) \\\\?\\\\? undefined/\\\\1.posterUrl/' 'app/\\(main\\)/stats/page.tsx')",
+      "Bash(sed -i '' '/^import { getPosterUrl } from \"@\\\\/lib\\\\/tmdb\";$/d' 'app/\\(main\\)/stats/page.tsx')",
+      "Bash(npx eslint *)",
+      "Bash(npx dotenv -e .env.local -- node -e ' *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/api/discover?mood=romance\")",
+      "Bash(grep -n -i -B2 -A12 \"viewportFit\\\\|### \\\\`width\\\\`\" /Users/diegoalexandercernacastillo/Dev/diego/framebeat/framebeat/node_modules/next/dist/docs/01-app/03-api-reference/04-functions/generate-viewport.md)",
+      "Bash(curl -s http://localhost:3000/login)"
+    ]
+  }
+}

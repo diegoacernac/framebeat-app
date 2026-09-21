@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { useDebouncedFetch } from "@/hooks/useDebouncedFetch";
 import { MediaCard } from "./MediaCard";
 import { MediaCardSkeleton } from "./MediaCardSkeleton";
 import { getPosterUrl } from "@/lib/tmdb";
@@ -22,31 +23,13 @@ export function MediaSearch({ initialResults = [], kind = "movie" }: Props) {
   const searchUrl = kind === "tv" ? "/api/series/search" : "/api/movies/search";
   const hrefBase = kind === "tv" ? "/series" : "/movies";
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<MovieResult[]>(initialResults);
-  const [loading, setLoading] = useState(false);
+  const trimmed = query.trim();
+  const { data, loading, error } = useDebouncedFetch<{ results?: MovieResult[] }>(
+    trimmed ? `${searchUrl}?q=${encodeURIComponent(trimmed)}` : null
+  );
+  const results = trimmed ? data?.results ?? [] : initialResults;
 
-  useEffect(() => {
-    if (!query.trim()) {
-      setResults(initialResults);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-
-    const timer = setTimeout(async () => {
-      const res = await fetch(
-        `${searchUrl}?q=${encodeURIComponent(query)}`
-      );
-      const data = await res.json();
-      setResults(data.results ?? []);
-      setLoading(false);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [query]);
-
-  const showingInitial = !query.trim() && initialResults.length > 0;
+  const showingInitial = !trimmed && initialResults.length > 0;
 
   return (
     <div className="space-y-6">
@@ -79,9 +62,15 @@ export function MediaSearch({ initialResults = [], kind = "movie" }: Props) {
         )}
       </div>
 
-      {!loading && query.trim() && results.length === 0 && (
+      {!loading && error && (
+        <p className="text-sm text-destructive">
+          No se pudo buscar. Intenta de nuevo.
+        </p>
+      )}
+
+      {!loading && !error && trimmed && results.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          No se encontraron películas.
+          {kind === "tv" ? "No se encontraron series." : "No se encontraron películas."}
         </p>
       )}
     </div>

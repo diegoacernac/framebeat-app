@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { useDebouncedFetch } from "@/hooks/useDebouncedFetch";
 import { MediaCard } from "./MediaCard";
 import { MediaCardSkeleton } from "./MediaCardSkeleton";
 import { getAlbumCoverUrl } from "@/lib/spotify";
@@ -16,29 +17,11 @@ type AlbumResult = {
 
 export function AlbumSearch() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<AlbumResult[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!query.trim()) {
-      setResults([]);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-
-    const timer = setTimeout(async () => {
-      const res = await fetch(
-        `/api/albums/search?q=${encodeURIComponent(query)}`
-      );
-      const data = await res.json();
-      setResults(data.results ?? []);
-      setLoading(false);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [query]);
+  const trimmed = query.trim();
+  const { data, loading, error } = useDebouncedFetch<{ results?: AlbumResult[] }>(
+    trimmed ? `/api/albums/search?q=${encodeURIComponent(trimmed)}` : null
+  );
+  const results = data?.results ?? [];
 
   return (
     <div className="space-y-6">
@@ -66,7 +49,13 @@ export function AlbumSearch() {
         )}
       </div>
 
-      {!loading && query.trim() && results.length === 0 && (
+      {!loading && error && (
+        <p className="text-sm text-destructive">
+          No se pudo buscar. Intenta de nuevo.
+        </p>
+      )}
+
+      {!loading && !error && trimmed && results.length === 0 && (
         <p className="text-sm text-muted-foreground">
           No se encontraron álbumes.
         </p>

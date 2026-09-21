@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
 import { PeopleSearch, type Person } from "./PeopleSearch";
+import { MOODS } from "@/lib/discover";
 
 // IDs de TMDB para Perú
 const PLATFORMS = [
@@ -13,22 +14,6 @@ const PLATFORMS = [
   { id: "337", name: "Disney+" },
   { id: "350", name: "Apple TV+" },
   { id: "384", name: "HBO/Max" },
-];
-
-// Mapeo -> generenos de TMDB
-// Géneros: 35=Comedia, 18=Drama, 28=Acción, 12=Aventura, 53=Thriller, 878=Sci-Fi, 10749=Romance
-const MOODS = [
-  { id : "cenar", label: "Para cenar", genres: ["35", "12"] },
-  { id: "profunda", label: "Algo profundo",  genres: ["18", "36"] },
-  { id: "reir",     label: "Para reír",      genres: ["35"] },
-  { id: "accion",   label: "Acción",         genres: ["28", "12"] },
-  { id: "suspenso", label: "Suspenso",       genres: ["53", "9648"] },
-  { id: "scifi",    label: "Sci-Fi",         genres: ["878"] },
-  { id: "romance",  label: "Romántica",      genres: ["10749", "18"] },
-  { id: "belica",      label: "Bélica",        genres: ["10752"] },
-  { id: "documental",  label: "Documentales",  genres: ["99"] },
-  { id: "terror",      label: "Terror",        genres: ["27"] },
-  { id: "psicologica", label: "Psicológicas",  genres: ["53", "18"] },
 ];
 
 const DECADES = [

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { listMembers, mediaItems, profiles, ratings } from "@/lib/db/schema";
 import { createClient } from "@/lib/supabase/server";
-import { getPosterUrl } from "@/lib/tmdb";
 
 function avg(arr: number[]) {
   if (!arr.length) return 0;
@@ -138,7 +137,7 @@ export default async function StatsPage() {
 
         <div className="rounded-lg border bg-card p-5 text-center">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">
-            {partnerProfile ? "-" : "—"}
+            {partnerProfile ? "Tu pareja" : "Sin pareja aún"}
           </p>
           <p className="mt-1 font-semibold">{partnerName}</p>
           {partnerProfile ? (
@@ -186,7 +185,7 @@ export default async function StatsPage() {
             {mostControversial.posterUrl && (
               <Link href={`/movies/${mostControversial.externalId}`}>
                 <img
-                  src={getPosterUrl(mostControversial.posterUrl, "w185") ?? undefined}
+                  src={mostControversial.posterUrl}
                   alt={mostControversial.title}
                   className="w-14 shrink-0 self-start rounded-sm object-cover"
                 />
@@ -244,7 +243,7 @@ export default async function StatsPage() {
                 >
                   {m.posterUrl && (
                     <img
-                      src={getPosterUrl(m.posterUrl, "w185") ?? undefined}
+                      src={m.posterUrl}
                       alt={m.title}
                       className="w-8 shrink-0 self-start rounded-sm object-cover"
                     />
@@ -273,7 +272,7 @@ export default async function StatsPage() {
                 >
                   {m.posterUrl && (
                     <img
-                      src={getPosterUrl(m.posterUrl, "w185") ?? undefined}
+                      src={m.posterUrl}
                       alt={m.title}
                       className="w-8 shrink-0 self-start rounded-sm object-cover"
                     />

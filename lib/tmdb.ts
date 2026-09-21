@@ -141,6 +141,7 @@ export async function getMovieWatchProviders(
 export async function discoverMovies(filters: {
   providers?: string[];
   genres: string[];
+  genreMatch?: "any" | "all";
   acclaimed?: boolean;
   decade?: string;
   runtime?: string;
@@ -159,7 +160,8 @@ export async function discoverMovies(filters: {
     params.with_watch_providers = filters.providers.join("|");
   }
   if (filters.genres?.length) {
-    params.with_genres = filters.genres.join("|");
+    // "|" = OR (cualquiera de los géneros), "," = AND (todos a la vez)
+    params.with_genres = filters.genres.join(filters.genreMatch === "all" ? "," : "|");
   }
   if (filters.acclaimed) {
     params["vote_average.gte"] = "7.5";
@@ -188,12 +190,15 @@ export async function discoverMovies(filters: {
   if (filters.runtime === "long")   params["with_runtime.gte"] = "131";
   if (filters.people?.length) params.with_people = filters.people.join("|");
 
-  const data = await tmdbFetch<TmdbSearchResponse & { total_pages: number }>(
-    "/discover/movie",
-    params
-  );
+  const data = await tmdbFetch<
+    TmdbSearchResponse & { total_pages: number; total_results: number }
+  >("/discover/movie", params);
   // TMDB nunca deja pedir más de la página 500, aunque diga que hay más.
-  return { results: data.results, totalPages: Math.min(data.total_pages, 500) };
+  return {
+    results: data.results,
+    totalPages: Math.min(data.total_pages, 500),
+    totalResults: data.total_results,
+  };
 }
 
 export async function getPopularTv() {

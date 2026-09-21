@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Input } from "../ui/input";
+import { useDebouncedFetch } from "@/hooks/useDebouncedFetch";
 
 export type Person = {
   id: number;
@@ -16,22 +17,14 @@ type Props = {
 
 export function PeopleSearch({ selected, onChange }: Props) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Person[]>([]);
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!query.trim()) { setResults([]); setOpen(false); return; }
-
-    const timer = setTimeout(async () => {
-      const res = await fetch(`/api/people/search?q=${encodeURIComponent(query)}`);
-      const data = await res.json();
-      setResults(data.results ?? []);
-      setOpen(true);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [query]);
+  const trimmed = query.trim();
+  const { data } = useDebouncedFetch<{ results?: Person[] }>(
+    trimmed ? `/api/people/search?q=${encodeURIComponent(trimmed)}` : null
+  );
+  const results = data?.results ?? [];
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
@@ -89,7 +82,10 @@ export function PeopleSearch({ selected, onChange }: Props) {
         <Input
           placeholder="Buscar director o actor..."
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(true);
+          }}
         />
 
         {open && results.length > 0 && (
