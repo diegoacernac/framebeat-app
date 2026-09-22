@@ -22,6 +22,12 @@ import { CaretRightIcon } from "@phosphor-icons/react/dist/ssr";
 import { getMediaHref } from "@/lib/media";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+// metadata.year lo guardan todos los botones de añadir ("2014")
+function getYear(metadata: unknown) {
+  const year = Number((metadata as { year?: unknown } | null)?.year);
+  return Number.isFinite(year) && year > 0 ? year : null;
+}
+
 export default async function ListDetailPage({
   params,
 }: {
@@ -67,12 +73,20 @@ export default async function ListDetailPage({
       mediaType: mediaItems.type,
       externalId: mediaItems.externalId,
       position: listItems.position,
+      metadata: mediaItems.metadata,
     })
     .from(listItems)
     .innerJoin(mediaItems, eq(listItems.mediaItemId, mediaItems.id))
     .where(eq(listItems.listId, listId))
     // Orden estable: sin orderBy, Postgres puede devolverlos en cualquier orden
-    .orderBy(asc(listItems.createdAt));
+    .orderBy(asc(listItems.createdAt))
+    // Por año de estreno (una saga queda en orden); sin año, al final en el
+    // orden en que se añadieron (sort es estable)
+    .then((rows) =>
+      rows
+        .map((row) => ({ ...row, year: getYear(row.metadata) }))
+        .sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999))
+    );
 
   const memberUserIds = members.map((m) => m.userId);
   const mediaItemIds = items.map((i) => i.mediaItemId);
@@ -139,6 +153,7 @@ export default async function ListDetailPage({
         listItemId={item.listItemId}
         mediaItemId={item.mediaItemId}
         title={item.title}
+        year={item.year}
         posterUrl={item.posterUrl}
         mediaType={item.mediaType}
         externalId={item.externalId}
@@ -151,7 +166,9 @@ export default async function ListDetailPage({
   }
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 space-y-8 p-4 sm:p-8 animate-in fade-in duration-300">
+    // En web: la lista y sugerencias a la izquierda, añadir/miembros en una
+    // columna lateral fija. En móvil todo va en una sola columna, en ese orden.
+    <main className="mx-auto w-full max-w-2xl flex-1 space-y-8 p-4 sm:p-8 lg:max-w-6xl animate-in fade-in duration-300">
       {/* Header */}
       <div className="space-y-2">
         <Link href="/lists" className="text-xs text-muted-foreground hover:underline">
@@ -163,6 +180,8 @@ export default async function ListDetailPage({
         )}
       </div>
 
+      <div className="space-y-8 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-12 lg:space-y-0">
+      <div className="min-w-0 space-y-8">
       {/* Progress stats */}
       {totalCount > 0 && (
         <div className="space-y-2">
@@ -241,9 +260,11 @@ export default async function ListDetailPage({
       <div className="border-t pt-6">
         <ListSuggestions listId={listId} existingKeys={existingKeys} />
       </div>
+      </div>
 
-      {/* Management — secondary */}
-      <section className="space-y-3 border-t pt-6">
+      {/* Management — secondary (en web: columna lateral fija) */}
+      <aside className="space-y-8 lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto lg:pr-1">
+      <section className="space-y-3 border-t pt-6 lg:border-t-0 lg:pt-0">
         <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
           Añadir película
         </h2>
@@ -288,6 +309,8 @@ export default async function ListDetailPage({
           <DeleteListButton listId={listId} title={list.title} />
         </section>
       )}
+      </aside>
+      </div>
     </main>
   );
 }

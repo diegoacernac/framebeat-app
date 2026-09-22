@@ -91,7 +91,7 @@ export default async function DiscoverPage({
   return (
     // group/discover: mientras DiscoverFilters navega (data-pending), los
     // resultados se atenúan vía CSS (ver DiscoverResults)
-    <main className="group/discover mx-auto w-full max-w-4xl flex-1 space-y-8 p-4 sm:p-8 animate-in fade-in duration-300">
+    <main className="group/discover mx-auto w-full max-w-4xl lg:max-w-6xl flex-1 space-y-8 p-4 sm:p-8 animate-in fade-in duration-300">
       <h1 className="text-2xl font-semibold">¿Qué vemos?</h1>
 
       <DiscoverFilters

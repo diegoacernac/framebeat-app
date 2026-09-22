@@ -11,11 +11,15 @@ type Movie = {
   title: string;
   release_date: string;
   poster_path: string | null;
+  vote_average?: number;
+  overview?: string;
 };
 
 export function PersonMovieSearch() {
   const [person, setPerson] = useState<Person | null>(null);
   const [movies, setMovies] = useState<Movie[]>([]);
+  // Rol con el que se armó la filmografía (lo decide la API si no lo sabemos)
+  const [department, setDepartment] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   // Cancela la petición anterior si se elige otra persona antes de que responda
@@ -40,12 +44,16 @@ export function PersonMovieSearch() {
     setError(false);
 
     try {
-      const res = await fetch(`/api/people/${selected.id}/movies`, {
-        signal: controller.signal,
-      });
+      const res = await fetch(
+        `/api/people/${selected.id}/movies?department=${encodeURIComponent(selected.department ?? "")}`,
+        {
+          signal: controller.signal,
+        }
+      );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setMovies(data.movies ?? []);
+      setDepartment(data.department ?? null);
     } catch {
       if (controller.signal.aborted) return;
       setMovies([]);
@@ -69,17 +77,17 @@ export function PersonMovieSearch() {
 
       {person && !loading && !error && (
         <p className="text-xs text-muted-foreground">
-          Filmografía de{" "}
+          {department === "Directing" ? "Dirigidas por " : "Con "}
           <span className="font-medium text-foreground">{person.name}</span>
           {" · "}
-          {movies.length} películas
+          {movies.length} {movies.length === 1 ? "película" : "películas"}
         </p>
       )}
 
       {(loading || movies.length > 0) && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-5">
           {loading ? (
-            <MediaCardSkeleton />
+            <MediaCardSkeleton count={10} />
           ) : (
             movies.map((movie, i) => (
               <MediaCard
@@ -89,6 +97,8 @@ export function PersonMovieSearch() {
                 title={movie.title}
                 subtitle={movie.release_date?.slice(0, 4)}
                 posterUrl={getPosterUrl(movie.poster_path, "w342")}
+                rating={movie.vote_average}
+                overview={movie.overview ?? ""}
               />
             ))
           )}

@@ -23,6 +23,7 @@ type Props = {
   listItemId: string;
   mediaItemId: string;
   title: string;
+  year: number | null;
   posterUrl: string | null;
   mediaType: "movie" | "album" | "tv";
   externalId: string;
@@ -37,6 +38,7 @@ export function ListItemRow({
   listItemId,
   mediaItemId,
   title,
+  year,
   posterUrl,
   mediaType,
   externalId,
@@ -117,7 +119,7 @@ export function ListItemRow({
         href={href}
         className={cn(
           "group relative shrink-0 self-start overflow-hidden bg-muted",
-          isPortrait ? "w-14 aspect-[2/3]" : "size-14"
+          isPortrait ? "w-14 aspect-[2/3] lg:w-16" : "size-14 lg:size-16"
         )}
       >
         {posterUrl ? (
@@ -126,7 +128,7 @@ export function ListItemRow({
             alt={title}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="48px"
+            sizes="64px"
           />
         ) : (
           <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
@@ -137,8 +139,11 @@ export function ListItemRow({
 
       <div className="min-w-0 flex-1 space-y-2">
         <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
-          <Link href={href} className="font-medium hover:underline leading-snug">
+          <Link href={href} className="font-medium leading-snug hover:underline">
             {title}
+            {year && (
+              <span className="ml-2 text-sm font-normal tabular-nums text-muted-foreground">{year}</span>
+            )}
           </Link>
           {averageStars !== null && (
             <span className="shrink-0 text-sm font-medium text-amber-500">

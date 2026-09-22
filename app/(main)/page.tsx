@@ -50,10 +50,12 @@ export default async function HomePage() {
       title: tv.name,
       release_date: tv.first_air_date,
       poster_path: tv.poster_path,
+      vote_average: tv.vote_average,
+      overview: tv.overview,
     }));
 
     return (
-      <main className="mx-auto w-full max-w-4xl flex-1 space-y-10 p-4 sm:p-8 animate-in fade-in duration-500">
+      <main className="mx-auto w-full max-w-4xl lg:max-w-6xl flex-1 space-y-10 p-4 sm:p-8 animate-in fade-in duration-500">
         <Tabs defaultValue="title">
           <TabsList>
             <TabsTrigger value="title">Por título</TabsTrigger>
@@ -74,7 +76,8 @@ export default async function HomePage() {
         {recentReviews.length > 0 && (
           <section className="space-y-4 border-t pt-8">
             <h2 className="text-lg font-semibold">Actividad reciente</h2>
-            <div className="space-y-4">
+            {/* En web, dos columnas: filas de ancho completo quedarían muy estiradas */}
+            <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-x-10 lg:gap-y-4 lg:space-y-0">
               {recentReviews.map((r, i) => {
                 const href = getMediaHref(r.mediaType, r.externalId);
 

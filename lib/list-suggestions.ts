@@ -11,6 +11,8 @@ export type Suggestion = {
   year: string | null;
   posterPath: string | null;
   overview: string;
+  // Nota de TMDB (0-10)
+  rating: number;
 };
 
 export type SuggestionGroup = {
@@ -154,7 +156,9 @@ type Credit = {
   overview: string;
   popularity: number;
   vote_count: number;
+  vote_average: number;
   job?: string;
+  character?: string;
 };
 
 type Paged<T> = { results: T[] };
@@ -231,6 +235,7 @@ function toSuggestion(c: Credit): Suggestion {
     year: c.release_date?.slice(0, 4) || null,
     posterPath: c.poster_path,
     overview: c.overview,
+    rating: c.vote_average,
   };
 }
 
@@ -257,7 +262,13 @@ async function personGroup(person: TmdbPerson): Promise<SuggestionGroup> {
 
   // Actores: sus películas más conocidas (descartamos cameos muy oscuros)
   const acted = data.cast
-    .filter((c) => released(c) && c.vote_count >= 50)
+    // Sin apariciones como sí mismo (documentales) ni sin crédito
+    .filter(
+      (c) =>
+        released(c) &&
+        c.vote_count >= 50 &&
+        !/\b(self|himself|herself|themselves)\b|uncredited|sin acreditar/i.test(c.character ?? "")
+    )
     .sort((a, b) => b.popularity - a.popularity);
   return {
     key: `person-${person.id}`,
@@ -344,6 +355,7 @@ async function similarGroup(entries: ListEntry[]): Promise<SuggestionGroup | nul
             year: (r.release_date ?? r.first_air_date)?.slice(0, 4) || null,
             posterPath: r.poster_path,
             overview: r.overview,
+            rating: r.vote_average,
           },
         });
     })

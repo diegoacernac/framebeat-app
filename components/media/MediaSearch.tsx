@@ -12,6 +12,8 @@ type MovieResult = {
   title: string;
   release_date: string;
   poster_path: string | null;
+  vote_average?: number;
+  overview?: string;
 };
 
 type Props = {
@@ -45,9 +47,9 @@ export function MediaSearch({ initialResults = [], kind = "movie" }: Props) {
         </p>
       )}
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-5">
         {loading ? (
-          <MediaCardSkeleton />
+          <MediaCardSkeleton count={10} />
         ) : (
           results.map((movie, i) => (
             <MediaCard
@@ -57,6 +59,8 @@ export function MediaSearch({ initialResults = [], kind = "movie" }: Props) {
               title={movie.title}
               subtitle={movie.release_date?.slice(0, 4)}
               posterUrl={getPosterUrl(movie.poster_path, "w342")}
+              rating={movie.vote_average}
+              overview={movie.overview ?? ""}
             />
           ))
         )}

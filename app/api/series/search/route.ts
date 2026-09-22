@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
         release_date: tv.first_air_date,
         poster_path: tv.poster_path,
         overview: tv.overview,
+        vote_average: tv.vote_average,
       })),
     });
   } catch {

@@ -12,8 +12,11 @@ type Props = {
   showStars?: number;
   // Marca "✓ Vista" (en ¿Qué vemos?: alguno de los dos ya la vio)
   seen?: boolean;
-  // Nota TMDB (0-10): se muestra como "★ 7.8" sobre el poster
+  // Nota TMDB (0-10): "★ 7.8" junto al año
   rating?: number;
+  // Con sinopsis, al pasar el mouse se muestra el título completo, año, nota
+  // y sinopsis sobre el poster (mismo formato que las sugerencias de listas)
+  overview?: string;
 };
 
 export function MediaCard({
@@ -26,7 +29,10 @@ export function MediaCard({
   showStars,
   seen = false,
   rating,
+  overview,
 }: Props) {
+  const hasRating = rating !== undefined && rating > 0;
+
   return (
     <Link
       href={href}
@@ -38,8 +44,8 @@ export function MediaCard({
     >
       <div
         className={cn(
-          "relative overflow-hidden border border-transparent bg-muted transition-all duration-200",
-          "group-hover:border-border group-hover:shadow-sm",
+          "relative overflow-hidden bg-muted ring-1 ring-transparent transition-shadow duration-200",
+          "group-hover:ring-foreground/30",
           aspectRatio === "poster" ? "aspect-[2/3]" : "aspect-square"
         )}
       >
@@ -56,8 +62,8 @@ export function MediaCard({
               // Atenuada, pero vuelve a opacidad completa al pasar el mouse
               seen && "opacity-40 group-hover:opacity-100"
             )}
-            // 2 columnas en móvil, 3 en sm, 4 desde md (contenedor max-w-4xl)
-            sizes="(min-width: 768px) 210px, (min-width: 640px) 33vw, 50vw"
+            // 2 columnas en móvil, 3 en sm, 4 en md, 5 desde lg (max-w-6xl)
+            sizes="(min-width: 1024px) 220px, (min-width: 768px) 25vw, (min-width: 640px) 33vw, 50vw"
           />
           </>
         ) : (
@@ -70,10 +76,17 @@ export function MediaCard({
             ✓ Vista
           </span>
         )}
-        {rating !== undefined && rating > 0 && (
-          <span className="absolute right-1.5 top-1.5 bg-black/75 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-amber-400">
-            ★ {rating.toFixed(1)}
-          </span>
+        {overview !== undefined && (
+          <div className="absolute inset-0 flex flex-col justify-end gap-1 bg-gradient-to-t from-black via-black/80 to-black/10 p-3 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+            <span className="text-sm font-medium leading-snug">{title}</span>
+            <span className="flex items-center gap-2 text-xs text-white/70">
+              {subtitle}
+              {hasRating && <span className="text-amber-400">★ {rating.toFixed(1)}</span>}
+            </span>
+            {overview && (
+              <span className="line-clamp-5 text-xs leading-snug text-white/70">{overview}</span>
+            )}
+          </div>
         )}
         {showStars !== undefined && showStars > 0 && (
           <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/75 via-black/10 to-transparent p-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
@@ -84,10 +97,13 @@ export function MediaCard({
 
       {/* Alto fijo (título de 2 líneas + año): con títulos largos la grilla
           no se descuadra, y el espacio sobrante queda abajo, no entre ambos */}
-      <div className="min-h-14">
+      <div className="min-h-14" title={title}>
         <p className="line-clamp-2 text-sm font-medium transition-colors group-hover:text-foreground">{title}</p>
-        {subtitle && (
-          <p className="text-xs text-muted-foreground">{subtitle}</p>
+        {(subtitle || hasRating) && (
+          <p className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+            {subtitle}
+            {hasRating && <span className="tabular-nums text-amber-500/90">★ {rating.toFixed(1)}</span>}
+          </p>
         )}
         {showStars !== undefined && showStars > 0 && (
           <p className="mt-0.5 text-xs text-yellow-600 dark:text-yellow-500">
