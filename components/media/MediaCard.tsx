@@ -88,8 +88,11 @@ export function MediaCard({
             )}
           </div>
         )}
-        {showStars !== undefined && showStars > 0 && (
-          <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/75 via-black/10 to-transparent p-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+        {/* Calificaciones (perfil): al pasar el mouse, título completo y estrellas */}
+        {overview === undefined && showStars !== undefined && showStars > 0 && (
+          <div className="absolute inset-0 flex flex-col justify-end gap-1 bg-gradient-to-t from-black via-black/60 to-transparent p-3 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+            <span className="text-sm font-medium leading-snug">{title}</span>
+            {subtitle && <span className="text-xs text-white/70">{subtitle}</span>}
             <span className="text-base text-amber-400">{"★".repeat(showStars)}</span>
           </div>
         )}

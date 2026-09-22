@@ -6,7 +6,7 @@ export default function Loading() {
     <main
       role="status"
       aria-label="Cargando perfil"
-      className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 p-4 sm:p-8"
+      className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 p-4 sm:p-8 lg:max-w-6xl"
     >
       {/* Avatar + nombre */}
       <div className="flex items-center gap-4">
@@ -30,8 +30,8 @@ export default function Loading() {
 
         {/* Pestañas + grilla de pósters (reusa el esqueleto de tarjeta) */}
         <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <MediaCardSkeleton count={6} />
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-5">
+          <MediaCardSkeleton count={10} />
         </div>
       </div>
       <span className="sr-only">Cargando…</span>

@@ -1,8 +1,5 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MediaCard } from "@/components/media/MediaCard";
 
 type RatingItem = {
@@ -10,6 +7,7 @@ type RatingItem = {
   title: string;
   posterUrl: string | null;
   externalId: string;
+  year: string | null;
 };
 
 function RatingsGrid({
@@ -28,7 +26,7 @@ function RatingsGrid({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-5">
       {items.map((rating, i) => (
         <MediaCard
           key={rating.externalId}
@@ -36,6 +34,7 @@ function RatingsGrid({
           aspectRatio={aspectRatio}
           href={`${hrefPrefix}/${rating.externalId}`}
           title={rating.title}
+          subtitle={rating.year ?? undefined}
           posterUrl={rating.posterUrl}
           showStars={rating.stars}
         />

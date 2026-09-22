@@ -19,7 +19,9 @@ export function Header({ user, profile }: HeaderProps) {
   return (
     <>
       <header className="border-b">
-        <nav className="mx-auto flex max-w-4xl items-center justify-between gap-2 p-3 md:p-4">
+        {/* Mismo ancho y margen lateral que el <main> de cada página: el logo
+            queda alineado con los títulos */}
+        <nav className="mx-auto flex max-w-4xl items-center justify-between gap-2 px-4 py-3 sm:px-8 md:py-4 lg:max-w-6xl">
           <Link href="/" className="shrink-0 text-sm font-semibold tracking-tight">
             FrameBeat
           </Link>

@@ -70,7 +70,7 @@ export default async function AlbumPage({
   const artists = album.artists.map((a) => a.name).join(", ");
 
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 p-8">
+    <main className="mx-auto w-full max-w-4xl flex-1 p-8 lg:max-w-6xl">
       <div className="flex flex-col gap-8 md:flex-row">
         {coverUrl && (
           <Image
@@ -78,7 +78,8 @@ export default async function AlbumPage({
             alt={album.name}
             width={300}
             height={300}
-            className="shrink-0"
+            // self-start: la portada no se estira si la columna de texto crece
+            className="aspect-square h-auto w-[300px] max-w-full shrink-0 self-start object-cover"
           />
         )}
         <div className="space-y-4">

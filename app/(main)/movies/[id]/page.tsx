@@ -1,8 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
+import { CastRow } from "@/components/media/CastRow";
 import { eq, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { getMovie, getPosterUrl, getBackdropUrl, getMovieWatchProviders, getMovieCredits, getProfileUrl } from "@/lib/tmdb";
+import { getMovie, getPosterUrl, getBackdropUrl, getMovieWatchProviders, getMovieCredits } from "@/lib/tmdb";
 import { db } from "@/lib/db";
 import { mediaItems, ratings, profiles } from "@/lib/db/schema";
 import { createClient } from "@/lib/supabase/server";
@@ -108,7 +109,7 @@ export default async function MoviePage({
         </div>
       )}
 
-      <main className="mx-auto w-full max-w-4xl flex-1 p-4 sm:p-8">
+      <main className="mx-auto w-full max-w-4xl flex-1 p-4 sm:p-8 lg:max-w-6xl">
         <div className="flex flex-col gap-8 md:flex-row">
           {posterUrl && (
             <Image
@@ -116,7 +117,9 @@ export default async function MoviePage({
               alt={movie.title}
               width={200}
               height={300}
-              className="shrink-0 rounded-sm shadow-lg"
+              // self-start + aspect fijo: si la columna de texto crece (sinopsis
+              // larga, menú de listas abierto) el poster no se estira con ella
+              className="aspect-[2/3] h-auto w-[200px] shrink-0 self-start rounded-sm object-cover shadow-lg"
             />
           )}
           <div className="space-y-4">
@@ -185,42 +188,10 @@ export default async function MoviePage({
 
         {topCast.length > 0 && (
           <section className="mt-8">
-            <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <h2 className="mb-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Reparto
             </h2>
-            <div className="scrollbar-none flex gap-4 overflow-x-auto pb-2">
-              {topCast.map((actor) => (
-                // Tocar un actor → "¿Qué vemos?" con sus películas
-                <Link
-                  key={actor.id}
-                  href={getPersonDiscoverHref(actor.id, actor.name, "Acting")}
-                  title={`Ver películas de ${actor.name}`}
-                  className="group w-16 shrink-0 space-y-1.5"
-                >
-                  <div className="relative h-16 w-16 overflow-hidden rounded-full bg-muted ring-amber-500 ring-offset-2 ring-offset-background transition-shadow group-hover:ring-2">
-                    {actor.profile_path ? (
-                      <Image
-                        src={getProfileUrl(actor.profile_path)!}
-                        alt={actor.name}
-                        fill
-                        className="object-cover object-top transition-transform duration-300 group-hover:scale-110"
-                        sizes="64px"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-muted-foreground text-lg">
-                        ?
-                      </div>
-                    )}
-                  </div>
-                  <p className="line-clamp-2 text-center text-xs font-medium leading-tight transition-colors group-hover:text-amber-500">
-                    {actor.name}
-                  </p>
-                  <p className="line-clamp-1 text-center text-xs text-muted-foreground">
-                    {actor.character}
-                  </p>
-                </Link>
-              ))}
-            </div>
+            <CastRow cast={topCast} />
           </section>
         )}
 

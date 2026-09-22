@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react/dist/ssr";
 import { useDebouncedFetch } from "@/hooks/useDebouncedFetch";
 import { mediaKey, useAddToList } from "@/hooks/useAddToList";
 import { getPosterUrl } from "@/lib/tmdb";
 import type { Suggestion, SuggestionGroup } from "@/lib/list-suggestions";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "../ui/skeleton";
+import { HorizontalScroller } from "../ui/horizontal-scroller";
+import { PosterRowSkeleton } from "../media/PosterRowSkeleton";
 import { AddFeedback, AddMediaButton } from "./AddMediaButton";
 
 type Props = {
@@ -30,13 +30,9 @@ export function ListSuggestions({ listId, existingKeys }: Props) {
 
   if (loading) {
     return (
-      <div className="space-y-3">
-        <Skeleton className="h-4 w-48" />
-        <div className="flex gap-3 overflow-hidden">
-          {Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={i} className="aspect-[2/3] w-28 shrink-0 sm:w-32 lg:w-36" />
-          ))}
-        </div>
+      <div className="space-y-4">
+        <Skeleton className="h-4 w-28" />
+        <PosterRowSkeleton />
       </div>
     );
   }
@@ -60,8 +56,6 @@ export function ListSuggestions({ listId, existingKeys }: Props) {
   );
 }
 
-// Una fila con scroll horizontal. Sin barra de scroll visible: en web se
-// mueve con flechas (aparecen al pasar el mouse), en móvil deslizando.
 function SuggestionRow({
   group,
   addToList,
@@ -69,81 +63,16 @@ function SuggestionRow({
   group: SuggestionGroup;
   addToList: ReturnType<typeof useAddToList>;
 }) {
-  const scrollerRef = useRef<HTMLUListElement>(null);
-  const [canLeft, setCanLeft] = useState(false);
-  const [canRight, setCanRight] = useState(false);
-
-  function updateArrows() {
-    const el = scrollerRef.current;
-    if (!el) return;
-    setCanLeft(el.scrollLeft > 4);
-    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
-  }
-
-  // Al montar y cuando cambia el ancho (girar el móvil, redimensionar)
-  useEffect(() => {
-    updateArrows();
-    const el = scrollerRef.current;
-    if (!el) return;
-    const observer = new ResizeObserver(updateArrows);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  function scrollBy(direction: 1 | -1) {
-    const el = scrollerRef.current;
-    if (!el) return;
-    el.scrollBy({ left: direction * el.clientWidth * 0.8, behavior: "smooth" });
-  }
-
   return (
     <div className="space-y-2">
       <h3 className="text-sm font-medium">{group.title}</h3>
-
-      <div className="group/row relative">
-        <ul
-          ref={scrollerRef}
-          onScroll={updateArrows}
-          className={cn(
-            "-mx-4 flex snap-x gap-3 overflow-x-auto scroll-smooth px-4 sm:mx-0 sm:px-0",
-            "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-            // Desvanecido en el borde por el que hay más: indica que se puede deslizar
-            canRight && "sm:[mask-image:linear-gradient(to_right,black_85%,transparent)]"
-          )}
-        >
-          {group.items.map((item) => (
-            <SuggestionCard key={mediaKey(item.type, item.id)} item={item} addToList={addToList} />
-          ))}
-        </ul>
-
-        {/* Flechas: solo con mouse (md+), a la altura del poster */}
-        {canLeft && (
-          <ArrowButton direction="left" onClick={() => scrollBy(-1)} />
-        )}
-        {canRight && (
-          <ArrowButton direction="right" onClick={() => scrollBy(1)} />
-        )}
-      </div>
+      {/* Flechas a mitad del poster: ancho de tarjeta × 1.5 (2:3) / 2 */}
+      <HorizontalScroller arrowClassName="[--card-w:8rem] lg:[--card-w:9rem] top-[calc(var(--card-w)*0.75)]">
+        {group.items.map((item) => (
+          <SuggestionCard key={mediaKey(item.type, item.id)} item={item} addToList={addToList} />
+        ))}
+      </HorizontalScroller>
     </div>
-  );
-}
-
-function ArrowButton({ direction, onClick }: { direction: "left" | "right"; onClick: () => void }) {
-  const Icon = direction === "left" ? CaretLeftIcon : CaretRightIcon;
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={direction === "left" ? "Ver anteriores" : "Ver más"}
-      className={cn(
-        "absolute top-[calc((var(--card-w)*1.5)/2)] z-10 hidden size-9 -translate-y-1/2 items-center justify-center border border-foreground/20 bg-background/90 text-foreground shadow-lg backdrop-blur transition-opacity md:flex",
-        "opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100 hover:border-foreground/60",
-        "[--card-w:8rem] lg:[--card-w:9rem]",
-        direction === "left" ? "-left-4" : "-right-4"
-      )}
-    >
-      <Icon size={16} weight="bold" />
-    </button>
   );
 }
 

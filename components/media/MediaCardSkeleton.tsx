@@ -23,8 +23,11 @@ export function MediaCardSkeleton({
               aspectRatio === "poster" ? "aspect-[2/3]" : "aspect-square"
             )}
           />
-          <div className="h-3 w-3/4 bg-muted" />
-          <div className="h-2 w-1/2 bg-muted" />
+          {/* Mismo alto que el texto de MediaCard (min-h-14): nada salta al cargar */}
+          <div className="min-h-14 space-y-2 pt-0.5">
+            <div className="h-3.5 w-3/4 bg-muted" />
+            <div className="h-3 w-1/3 bg-muted" />
+          </div>
         </div>
       ))}
     </>

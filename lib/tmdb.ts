@@ -72,7 +72,7 @@ export function getBackdropUrl(path: string | null, size: "w780" | "w1280" | "or
   return `${TMDB_IMAGE_BASE}/${size}${path}`;
 }
 
-export function getProfileUrl(path: string | null, size: "w45" | "w185" = "w185") {
+export function getProfileUrl(path: string | null, size: "w45" | "w185" | "h632" = "w185") {
   if (!path) return null;
   return `${TMDB_IMAGE_BASE}/${size}${path}`;
 }

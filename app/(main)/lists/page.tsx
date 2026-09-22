@@ -64,7 +64,7 @@ export default async function ListsPage() {
   }, {});
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 space-y-6 p-4 sm:p-8 animate-in fade-in duration-300">
+    <main className="mx-auto w-full max-w-2xl flex-1 space-y-6 p-4 sm:p-8 lg:max-w-6xl animate-in fade-in duration-300">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Mis listas</h1>
         <Button asChild>
@@ -77,14 +77,15 @@ export default async function ListsPage() {
           Aún no tienes listas compartidas.
         </p>
       ) : (
-        <ul className="space-y-3">
+        // Tarjetas en grilla: 1 columna en móvil, 2 en tablet, 3 en web
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
           {lists.map((list, i) => {
             const items = itemsByList[list.id] ?? [];
             const completed = completedByList[list.id] ?? new Set();
             const total = items.length;
             const completedCount = completed.size;
             const pct = total > 0 ? (completedCount / total) * 100 : 0;
-            const previews = items.slice(0, 5);
+            const roleLabel = list.role === "owner" ? "Propietario" : "Miembro";
 
             return (
               <li
@@ -95,49 +96,27 @@ export default async function ListsPage() {
               >
                 <Link
                   href={`/lists/${list.id}`}
-                  className="block border p-4 space-y-3 transition-colors hover:border-amber-500/40 hover:bg-muted/30 active:bg-muted/50"
+                  className="group flex h-full flex-col gap-4 border p-4 transition-colors hover:border-foreground/30 hover:bg-muted/20 active:bg-muted/40"
                 >
-                  {previews.length > 0 && (
-                    <div className="flex gap-1">
-                      {previews.map((item, i) => (
-                        <div
-                          key={i}
-                          className="relative w-10 shrink-0 overflow-hidden bg-muted aspect-[2/3]"
-                        >
-                          {item.posterUrl && (
-                            <Image
-                              src={item.posterUrl}
-                              alt=""
-                              fill
-                              className="object-cover"
-                              sizes="40px"
-                            />
-                          )}
-                        </div>
-                      ))}
-                      {total > 5 && (
-                        <div className="relative w-10 shrink-0 aspect-[2/3] bg-muted flex items-center justify-center">
-                          <span className="text-xs text-muted-foreground">+{total - 5}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  <PosterStrip posters={items.map((item) => item.posterUrl)} total={total} />
 
-                  <div>
-                    <p className="font-medium">{list.title}</p>
+                  <div className="flex-1">
+                    <p className="font-medium leading-snug">{list.title}</p>
                     {list.description && (
-                      <p className="mt-0.5 text-sm text-muted-foreground">{list.description}</p>
+                      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                        {list.description}
+                      </p>
                     )}
                   </div>
 
-                  {total > 0 && (
+                  {total > 0 ? (
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span>
                           <span className="font-medium text-foreground">{completedCount}</span>
                           /{total} vistas
                         </span>
-                        <span>{list.role === "owner" ? "Propietario" : "Miembro"}</span>
+                        <span>{roleLabel}</span>
                       </div>
                       <div className="h-0.5 w-full overflow-hidden rounded-full bg-muted">
                         <div
@@ -146,12 +125,8 @@ export default async function ListsPage() {
                         />
                       </div>
                     </div>
-                  )}
-
-                  {total === 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {list.role === "owner" ? "Propietario" : "Miembro"} · sin contenido aún
-                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">{roleLabel} · sin contenido aún</p>
                   )}
                 </Link>
               </li>
@@ -160,5 +135,40 @@ export default async function ListsPage() {
         </ul>
       )}
     </main>
+  );
+}
+
+// Los primeros 5 pósters a todo el ancho de la tarjeta. Si hay más, el
+// último muestra "+N"; si hay menos (o ninguno), los huecos quedan vacíos
+// para que todas las tarjetas tengan la misma altura.
+const STRIP_SIZE = 5;
+
+function PosterStrip({ posters, total }: { posters: (string | null)[]; total: number }) {
+  return (
+    <div className="grid grid-cols-5 gap-1">
+      {Array.from({ length: STRIP_SIZE }, (_, i) => {
+        const poster = posters[i];
+        const isLast = i === STRIP_SIZE - 1;
+        const hidden = total - STRIP_SIZE + 1; // los que no se ven, contando este
+        return (
+          <div key={i} className="relative aspect-[2/3] overflow-hidden bg-muted/60">
+            {poster && (
+              <Image
+                src={poster}
+                alt=""
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="(min-width: 1024px) 70px, (min-width: 640px) 18vw, 18vw"
+              />
+            )}
+            {isLast && total > STRIP_SIZE && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/65">
+                <span className="text-sm font-medium text-white">+{hidden}</span>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 }

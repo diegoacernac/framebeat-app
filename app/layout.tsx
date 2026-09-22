@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Footer } from "../components/layout/Footer";
+import { NavigationProgress } from "@/components/layout/NavigationProgress";
 
 const jetbrainsMono = JetBrains_Mono({subsets:['latin'],variable:'--font-mono'});
 
@@ -38,6 +39,7 @@ export default function RootLayout({
       className={cn("h-full dark", "antialiased", geistSans.variable, geistMono.variable, "font-mono", jetbrainsMono.variable)}
     >
       <body className="min-h-full flex flex-col">
+        <NavigationProgress />
         {children}
         <Footer />
       </body>

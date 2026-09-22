@@ -5,7 +5,7 @@ export default function Loading() {
     <main
       role="status"
       aria-label="Cargando álbum"
-      className="mx-auto w-full max-w-4xl flex-1 p-8"
+      className="mx-auto w-full max-w-4xl flex-1 p-8 lg:max-w-6xl"
     >
       <div className="flex flex-col gap-8 md:flex-row">
         {/* Portada: mismo 300x300 que el <Image> real */}

@@ -24,6 +24,7 @@ export default async function ProfilePage({
       title: mediaItems.title,
       posterUrl: mediaItems.posterUrl,
       externalId: mediaItems.externalId,
+      metadata: mediaItems.metadata,
     })
     .from(ratings)
     .innerJoin(mediaItems, eq(ratings.mediaItemId, mediaItems.id))
@@ -38,6 +39,7 @@ export default async function ProfilePage({
       title: mediaItems.title,
       posterUrl: mediaItems.posterUrl,
       externalId: mediaItems.externalId,
+      metadata: mediaItems.metadata,
     })
     .from(ratings)
     .innerJoin(mediaItems, eq(ratings.mediaItemId, mediaItems.id))
@@ -46,10 +48,17 @@ export default async function ProfilePage({
     )
     .orderBy(desc(ratings.createdAt));
 
+  // El año lo guardan todos los botones de calificar en metadata.year
+  const withYear = (rows: typeof movieRatings) =>
+    rows.map(({ metadata, ...row }) => ({
+      ...row,
+      year: String((metadata as { year?: unknown } | null)?.year ?? "") || null,
+    }));
+
   const initials = profile.username.slice(0, 2).toUpperCase();
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 p-4 sm:p-8">
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 p-4 sm:p-8 lg:max-w-6xl animate-in fade-in duration-300">
       <div className="flex items-center gap-4">
         <Avatar className="size-16">
           {profile.avatarUrl && (
@@ -67,8 +76,8 @@ export default async function ProfilePage({
       {profile.bio && <p className="text-sm">{profile.bio}</p>}
 
       <ProfileRatingsTabs
-        movieRatings={movieRatings}
-        albumRatings={albumRatings}
+        movieRatings={withYear(movieRatings)}
+        albumRatings={withYear(albumRatings)}
       />
     </main>
   );
