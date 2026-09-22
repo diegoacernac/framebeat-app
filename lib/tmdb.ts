@@ -316,6 +316,100 @@ async function discoverMoviesByPeople(
   };
 }
 
+type TmdbVideo = {
+  key: string;
+  name: string;
+  site: string;
+  type: string;
+  official: boolean;
+  iso_639_1: string;
+  iso_3166_1: string;
+};
+
+// Una versión del tráiler por idioma. El reproductor abre la primera y deja
+// cambiar entre las demás.
+export type TrailerVersion = {
+  id: "latino" | "subtitulado" | "ingles" | "espana";
+  label: string;
+  youtubeKey: string;
+  name: string;
+  // Video en inglés: el reproductor pide a YouTube subtítulos en español
+  // (solo aparecen si el video los tiene; casi nunca)
+  wantsSubtitles: boolean;
+};
+
+export type Trailer = { versions: TrailerVersion[] };
+
+// Orden de preferencia: la primera versión disponible es la que abre
+const VERSION_ORDER: { id: TrailerVersion["id"]; label: string }[] = [
+  { id: "latino", label: "Latino" },
+  { id: "subtitulado", label: "Subtitulado" },
+  { id: "ingles", label: "Inglés" },
+  { id: "espana", label: "España" },
+];
+
+// De qué versión es un video: latino doblado, latino subtitulado (audio
+// original con subtítulos latinos incrustados), inglés o España
+function versionOf(v: TmdbVideo): TrailerVersion["id"] | null {
+  if (v.iso_639_1 === "es") {
+    if (v.iso_3166_1 === "ES") return "espana";
+    return /subtitulad/i.test(v.name) ? "subtitulado" : "latino";
+  }
+  return v.iso_639_1 === "en" ? "ingles" : null;
+}
+
+// Tráileres de una película o serie (YouTube), uno por idioma: latino,
+// subtitulado, inglés y España (los que existan). Dentro de cada idioma:
+// tráiler antes que teaser y oficial antes que no.
+// Series: se prefieren los de la temporada 1 (el de la temporada 8 adelanta
+// la trama); los de la serie en general quedan como respaldo.
+// TMDB solo devuelve los videos latinos si se piden con language=es-MX, así
+// que se consultan aparte del resto (inglés y España).
+export async function getTrailer(kind: "movie" | "tv", id: number): Promise<Trailer | null> {
+  const fetchVideos = (path: string) =>
+    Promise.all([
+      tmdbFetch<{ results: TmdbVideo[] }>(path, { language: "es-MX" }),
+      tmdbFetch<{ results: TmdbVideo[] }>(path, { language: "en-US", include_video_language: "en,es" }),
+    ]).then(([latin, others]) => [...latin.results, ...others.results]);
+
+  const [general, firstSeason] = await Promise.all([
+    fetchVideos(`/${kind}/${id}/videos`),
+    kind === "tv" ? fetchVideos(`/tv/${id}/season/1/videos`).catch(() => []) : Promise.resolve([]),
+  ]);
+
+  const fromFirstSeason = new Set(firstSeason.map((v) => v.key));
+  const score = (v: TmdbVideo) =>
+    (fromFirstSeason.has(v.key) ? 50 : 0) +
+    (v.type === "Trailer" ? 20 : 0) +
+    // "Review", "Spot", "Featurette"... a veces vienen marcados como Trailer
+    (/tr[aá]iler/i.test(v.name) ? 5 : 0) +
+    (v.official ? 3 : 0);
+
+  // Series: fuera los tráilers de temporadas posteriores ("Temporada 8",
+  // "Final Season"): adelantan la trama. Mejor sin versión latina que con spoilers.
+  const laterSeason =
+    // "Temporada 8", "Temporada #4", "Season 3", "T2", "Final Season", y "Game of
+    // Thrones 6 | Trailer" (número suelto antes de un separador)
+    /\b(temporada|season|t)\s*#?\s*0*([2-9]|\d{2,})\b|\s([2-9]|\d{2})\s*[|:–-]|final season|temporada final|[uú]ltima temporada/i;
+  const allowed = (v: TmdbVideo) =>
+    kind !== "tv" || fromFirstSeason.has(v.key) || !laterSeason.test(v.name);
+
+  const best = new Map<TrailerVersion["id"], TmdbVideo>();
+  for (const v of [...firstSeason, ...general]) {
+    if (v.site !== "YouTube" || (v.type !== "Trailer" && v.type !== "Teaser") || !allowed(v)) continue;
+    const version = versionOf(v);
+    if (!version) continue;
+    const current = best.get(version);
+    if (!current || score(v) > score(current)) best.set(version, v);
+  }
+
+  const versions = VERSION_ORDER.filter((o) => best.has(o.id)).map((o) => {
+    const v = best.get(o.id)!;
+    return { id: o.id, label: o.label, youtubeKey: v.key, name: v.name, wantsSubtitles: o.id === "ingles" };
+  });
+  return versions.length ? { versions } : null;
+}
+
 export async function getPopularTv() {
   const data = await tmdbFetch<TmdbTvSearchResponse>("/tv/popular");
   return data.results;

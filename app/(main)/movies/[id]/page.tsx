@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { CastRow } from "@/components/media/CastRow";
 import { DetailHero } from "@/components/media/DetailHero";
+import { TrailerButton } from "@/components/media/TrailerButton";
 import { ExpandableText } from "@/components/ui/expandable-text";
 import { RateShortcut } from "@/components/ratings/RateShortcut";
 import { eq, and } from "drizzle-orm";
 import { ratingVisibleTo } from "@/lib/visibility";
 import { notFound } from "next/navigation";
-import { getMovie, getPosterUrl, getBackdropUrl, getMovieWatchProviders, getMovieCredits } from "@/lib/tmdb";
+import { getMovie, getPosterUrl, getBackdropUrl, getMovieWatchProviders, getMovieCredits, getTrailer } from "@/lib/tmdb";
 import { db } from "@/lib/db";
 import { mediaItems, ratings, profiles } from "@/lib/db/schema";
 import { createClient } from "@/lib/supabase/server";
@@ -33,10 +34,11 @@ export default async function MoviePage({
   const tmdbId = Number(id);
   if (Number.isNaN(tmdbId)) notFound();
 
-  const [movie, watchProviders, credits] = await Promise.all([
+  const [movie, watchProviders, credits, trailer] = await Promise.all([
     getMovie(tmdbId).catch(() => null),
     getMovieWatchProviders(tmdbId).catch(() => null),
     getMovieCredits(tmdbId).catch(() => ({ cast: [], directors: [] })),
+    getTrailer("movie", tmdbId).catch(() => null),
   ]);
   if (!movie) notFound();
   const topCast = credits.cast.slice(0, 12);
@@ -157,8 +159,11 @@ export default async function MoviePage({
           />
         )}
 
-        {user && (
+        {(trailer || user) && (
           <div className="flex flex-wrap items-start gap-2">
+            {trailer && <TrailerButton trailer={trailer} title={movie.title} />}
+            {user && (
+            <>
             <AddToListButton
               lists={myLists}
               mediaType="movie"
@@ -169,6 +174,8 @@ export default async function MoviePage({
               metadata={{ overview: movie.overview, year }}
             />
             <RateShortcut href="#calificar" stars={userRating?.stars ?? null} />
+            </>
+            )}
           </div>
         )}
       </DetailHero>

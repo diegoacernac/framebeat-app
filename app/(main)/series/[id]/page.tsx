@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { CastRow } from "@/components/media/CastRow";
 import { DetailHero } from "@/components/media/DetailHero";
+import { TrailerButton } from "@/components/media/TrailerButton";
 import { ExpandableText } from "@/components/ui/expandable-text";
 import { RateShortcut } from "@/components/ratings/RateShortcut";
 import { eq, and, inArray, like } from "drizzle-orm";
@@ -13,6 +14,7 @@ import {
   getBackdropUrl,
   getTvWatchProviders,
   getTvCredits,
+  getTrailer,
 } from "@/lib/tmdb";
 import { db } from "@/lib/db";
 import { mediaItems, ratings, profiles } from "@/lib/db/schema";
@@ -36,10 +38,11 @@ export default async function SeriesPage({
   const tvId = Number(id);
   if (Number.isNaN(tvId)) notFound();
 
-  const [tv, watchProviders, cast] = await Promise.all([
+  const [tv, watchProviders, cast, trailer] = await Promise.all([
     getTv(tvId).catch(() => null),
     getTvWatchProviders(tvId).catch(() => null),
     getTvCredits(tvId).catch(() => []),
+    getTrailer("tv", tvId).catch(() => null),
   ]);
   if (!tv) notFound();
   const topCast = cast.slice(0, 12);
@@ -140,8 +143,11 @@ export default async function SeriesPage({
           />
         )}
 
-        {user && (
+        {(trailer || user) && (
           <div className="flex flex-wrap items-start gap-2">
+            {trailer && <TrailerButton trailer={trailer} title={tv.name} />}
+            {user && (
+            <>
             <AddToListButton
               lists={myLists}
               mediaType="tv"
@@ -152,6 +158,8 @@ export default async function SeriesPage({
             />
             {/* Las series se califican por temporada: lleva a esa sección */}
             <RateShortcut href="#temporadas" stars={null} label="Calificar temporadas" />
+            </>
+            )}
           </div>
         )}
       </DetailHero>
