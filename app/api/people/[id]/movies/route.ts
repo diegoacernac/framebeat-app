@@ -6,7 +6,7 @@ export async function GET(
 
   const url = new URL(`https://api.themoviedb.org/3/person/${id}/movie_credits`);
   url.searchParams.set("api_key", process.env.TMDB_API_KEY!);
-  url.searchParams.set("language", "es-ES");
+  url.searchParams.set("language", "es-MX");
 
   const res = await fetch(url.toString(), { next: { revalidate: 3600 } });
   const data = await res.json();

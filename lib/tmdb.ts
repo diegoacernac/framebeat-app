@@ -51,10 +51,10 @@ type TmdbTvSearchResponse = {
   results: TmdbTvSearchResult[];
 };
 
-async function tmdbFetch<T>(path: string, params: Record<string, string> = {}): Promise<T> {
+export async function tmdbFetch<T>(path: string, params: Record<string, string> = {}): Promise<T> {
   const url = new URL(`${TMDB_BASE}${path}`);
   url.searchParams.set("api_key", process.env.TMDB_API_KEY!);
-  url.searchParams.set("language", "es-ES");
+  url.searchParams.set("language", "es-MX");
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
 
   const res = await fetch(url.toString(), { next: { revalidate: 3600 } });
@@ -62,7 +62,7 @@ async function tmdbFetch<T>(path: string, params: Record<string, string> = {}): 
   return res.json();
 }
 
-export function getPosterUrl(path: string | null, size: "w185" | "w342" | "w500" | "original" = "w500") {
+export function getPosterUrl(path: string | null, size: "w92" | "w185" | "w342" | "w500" | "original" = "w500") {
   if (!path) return null;
   return `${TMDB_IMAGE_BASE}/${size}${path}`;
 }

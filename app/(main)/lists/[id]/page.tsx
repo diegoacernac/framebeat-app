@@ -14,6 +14,7 @@ import {
 import { createClient } from "../../../../lib/supabase/server";
 import { InviteMemberForm } from "@/components/lists/InviteMemberForm";
 import { ListAddMovieSearch } from "@/components/lists/ListAddMovieSearch";
+import { ListSuggestions } from "@/components/lists/ListSuggestions";
 import { ListItemRow } from "@/components/lists/ListItemRow";
 import { DeleteListButton } from "@/components/lists/DeleteListButton";
 import { RandomPickButton } from "@/components/lists/RandomPickButton";
@@ -107,6 +108,9 @@ export default async function ListDetailPage({
         )
       )
     : [];
+
+  // "movie:123": para marcar ✓ lo que ya está en los buscadores y sugerencias
+  const existingKeys = items.map((i) => `${i.mediaType}:${i.externalId}`);
 
   const completedSet = new Set(progressRows.map((p) => p.mediaItemId));
   const completedCount = completedSet.size;
@@ -233,19 +237,24 @@ export default async function ListDetailPage({
         </>
       )}
 
+      {/* Según el título, la descripción y lo que ya tienen */}
+      <div className="border-t pt-6">
+        <ListSuggestions listId={listId} existingKeys={existingKeys} />
+      </div>
+
       {/* Management — secondary */}
       <section className="space-y-3 border-t pt-6">
         <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
           Añadir película
         </h2>
-        <ListAddMovieSearch listId={listId} kind="movie" />
+        <ListAddMovieSearch listId={listId} kind="movie" existingKeys={existingKeys} />
       </section>
 
       <section className="space-y-3">
         <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
           Añadir serie
         </h2>
-        <ListAddMovieSearch listId={listId} kind="tv" />
+        <ListAddMovieSearch listId={listId} kind="tv" existingKeys={existingKeys} />
       </section>
 
       <section className="space-y-3">

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { CheckIcon } from "@phosphor-icons/react/dist/ssr";
+import { useState } from "react";
+import Image from "next/image";
+import { XIcon } from "@phosphor-icons/react/dist/ssr";
 import { useDebouncedFetch } from "@/hooks/useDebouncedFetch";
+import { useAddToList } from "@/hooks/useAddToList";
 import { Input } from "../ui/input";
-import { Button } from "../ui/button";
 import { Spinner } from "../ui/spinner";
+import { AddFeedback, AddMediaButton } from "./AddMediaButton";
 import { getPosterUrl } from "../../lib/tmdb";
 import { cn } from "@/lib/utils";
 
@@ -21,18 +22,13 @@ type MovieResult = {
 type Props = {
   listId: string;
   kind?: "movie" | "tv";
+  // Lo que ya está en la lista ("movie:123"), para marcarlo en los resultados
+  existingKeys: string[];
 };
 
-type Feedback = { type: "ok" | "error"; text: string };
-
-export function ListAddMovieSearch({ listId, kind = "movie" }: Props) {
-  const router = useRouter();
+export function ListAddMovieSearch({ listId, kind = "movie", existingKeys }: Props) {
   const [query, setQuery] = useState("");
-  const [addingId, setAddingId] = useState<number | null>(null);
-  const [feedback, setFeedback] = useState<Feedback | null>(null);
-  // isPending sigue en true hasta que router.refresh() trae la lista nueva:
-  // así el spinner dura justo hasta que la fila aparece, no solo hasta el POST
-  const [isPending, startTransition] = useTransition();
+  const { add, isInList, isAdding, feedback } = useAddToList(listId, existingKeys);
 
   const searchUrl = kind === "tv" ? "/api/series/search" : "/api/movies/search";
   const trimmed = query.trim();
@@ -41,57 +37,28 @@ export function ListAddMovieSearch({ listId, kind = "movie" }: Props) {
   );
   const results = data?.results ?? [];
 
-  // El mensaje de "añadida" se va solo a los 3 segundos
-  useEffect(() => {
-    if (!feedback) return;
-    const timer = setTimeout(() => setFeedback(null), 3000);
-    return () => clearTimeout(timer);
-  }, [feedback]);
-
-  function addMovie(movie: MovieResult) {
-    setAddingId(movie.id);
-    setFeedback(null);
-
-    startTransition(async () => {
-      const res = await fetch(`/api/lists/${listId}/items`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mediaType: kind,
-          externalId: String(movie.id),
-          title: movie.title,
-          posterUrl: getPosterUrl(movie.poster_path, "w185"),
-          metadata: { overview: movie.overview, year: movie.release_date?.slice(0, 4) },
-        }),
-      });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        // Los setState después de un await, dentro de startTransition otra vez
-        // (regla de React 19 para transiciones async)
-        startTransition(() => {
-          setAddingId(null);
-          setFeedback({ type: "error", text: body.error ?? "No se pudo añadir" });
-        });
-        return;
-      }
-
-      router.refresh();
-      startTransition(() => {
-        setQuery("");
-        setAddingId(null);
-        setFeedback({ type: "ok", text: `"${movie.title}" añadida a la lista` });
-      });
-    });
-  }
-
   return (
     <div className="space-y-3">
-      <Input
-        placeholder={kind === "tv" ? "Buscar serie para añadir..." : "Buscar película para añadir..."}
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
+      <div className="relative">
+        <Input
+          placeholder={kind === "tv" ? "Buscar serie para añadir..." : "Buscar película para añadir..."}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="pr-8"
+        />
+        {/* Los resultados se quedan al añadir (para elegir varias de la misma
+            búsqueda): se limpian a mano */}
+        {query && (
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            aria-label="Limpiar búsqueda"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <XIcon size={14} />
+          </button>
+        )}
+      </div>
 
       {loading && (
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -102,55 +69,46 @@ export function ListAddMovieSearch({ listId, kind = "movie" }: Props) {
         <p className="text-xs text-destructive">No se pudo buscar. Intenta de nuevo.</p>
       )}
 
-      {feedback && (
-        <p
-          key={feedback.text}
-          role="status"
-          className={cn(
-            "flex items-center gap-1.5 text-xs animate-in fade-in slide-in-from-top-1 duration-200",
-            feedback.type === "ok" ? "text-amber-500" : "text-destructive"
-          )}
-        >
-          {feedback.type === "ok" && <CheckIcon size={12} weight="bold" />}
-          {feedback.text}
-        </p>
-      )}
+      <AddFeedback feedback={feedback} />
 
       <ul className="space-y-2">
         {results.map((movie, i) => {
-          const isAdding = addingId === movie.id;
+          const inList = isInList(kind, movie.id);
+          const poster = getPosterUrl(movie.poster_path, "w92");
           return (
             <li
               key={movie.id}
               className={cn(
-                "flex items-center justify-between gap-2 border p-2 text-sm transition-opacity",
+                "flex items-center gap-3 border p-2 text-sm transition-colors",
                 "animate-in fade-in slide-in-from-top-1 fill-mode-both duration-200",
-                // Mientras se añade una, las demás se atenúan
-                addingId !== null && !isAdding && "opacity-40"
+                inList && "border-amber-500/40 bg-amber-500/5"
               )}
               style={{ animationDelay: `${i * 30}ms` }}
             >
-              <span>
+              {/* Poster chico: ayuda a distinguir entre títulos casi iguales */}
+              <div className="relative aspect-[2/3] w-9 shrink-0 overflow-hidden bg-muted">
+                {poster && <Image src={poster} alt="" fill sizes="36px" className="object-cover" />}
+              </div>
+              <span className="min-w-0 flex-1">
                 {movie.title}{" "}
                 <span className="text-muted-foreground">
-                  ({movie.release_date?.slice(0, 4)})
+                  ({movie.release_date?.slice(0, 4) || "s/f"})
                 </span>
               </span>
-              <Button
-                type="button"
-                size="sm"
-                disabled={isPending}
-                onClick={() => addMovie(movie)}
-                className="min-w-20"
-              >
-                {isAdding ? (
-                  <>
-                    <Spinner size={12} /> Añadiendo
-                  </>
-                ) : (
-                  "Añadir"
-                )}
-              </Button>
+              <AddMediaButton
+                inList={inList}
+                adding={isAdding(kind, movie.id)}
+                onAdd={() =>
+                  add({
+                    id: movie.id,
+                    type: kind,
+                    title: movie.title,
+                    year: movie.release_date?.slice(0, 4) || null,
+                    posterPath: movie.poster_path,
+                    overview: movie.overview,
+                  })
+                }
+              />
             </li>
           );
         })}
