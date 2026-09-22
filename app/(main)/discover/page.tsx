@@ -103,6 +103,7 @@ export default async function DiscoverPage({
         initialDecade={filters.decade}
         initialRuntime={filters.runtime}
         initialPeople={people}
+        initialCollapsed={hasFilters}
       />
 
       {result ? (

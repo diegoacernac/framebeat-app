@@ -106,7 +106,7 @@ export function parseDiscoverParams(params: DiscoverSearchParams) {
       acclaimed,
       decade,
       runtime,
-      people: people.map((p) => p.id),
+      people: people.map((p) => ({ id: p.id, department: p.department })),
     },
   };
 }

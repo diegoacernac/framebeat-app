@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { ShuffleIcon } from "@phosphor-icons/react/dist/ssr";
 import { MediaCard } from "@/components/media/MediaCard";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -42,6 +44,17 @@ export function DiscoverResults({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [hideSeen, setHideSeen] = useState(false);
+  const router = useRouter();
+  const [isShuffling, startShuffle] = useTransition();
+
+  // "Mezclar": misma búsqueda, página al azar (la elige el server según
+  // cuántas hay). r es un valor único para que navegue aunque no cambie nada.
+  function shuffle() {
+    const r = Math.random().toString(36).slice(2, 8);
+    startShuffle(() => {
+      router.push(`/discover?${filterQuery}&shuffle=1&r=${r}`, { scroll: false });
+    });
+  }
 
   const hasMore = page < totalPages;
   const seenSet = new Set(seenIds);
@@ -76,14 +89,29 @@ export function DiscoverResults({
   }
 
   return (
-    <div className={cn("space-y-6", PENDING_DIM)}>
+    // data-pending al mezclar: atenúa la lista igual que al cambiar filtros
+    <div className={cn("space-y-6", PENDING_DIM)} data-pending={isShuffling || undefined}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">
-          {shuffled ? "Selección al azar entre " : ""}
-          {totalResults.toLocaleString("es-PE")}{" "}
-          {totalResults === 1 ? noun[0] : noun[1]}
-          {" · "}mostrando {visible.length}
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-xs text-muted-foreground">
+            {shuffled ? "Selección al azar entre " : ""}
+            {totalResults.toLocaleString("es-PE")}{" "}
+            {totalResults === 1 ? noun[0] : noun[1]}
+            {" · "}mostrando {visible.length}
+          </p>
+          {totalPages > 1 && (
+            <button
+              type="button"
+              onClick={shuffle}
+              disabled={isShuffling}
+              title="Otra tanda al azar con los mismos filtros"
+              className="flex items-center gap-1 border border-foreground/25 px-2.5 py-1 text-xs text-foreground/80 transition-colors hover:border-foreground/70 hover:text-foreground disabled:opacity-50"
+            >
+              {isShuffling ? <Spinner size={12} /> : <ShuffleIcon size={12} />}
+              Mezclar
+            </button>
+          )}
+        </div>
 
         {seenCount > 0 && (
           <button
@@ -93,8 +121,8 @@ export function DiscoverResults({
             className={cn(
               "border px-2.5 py-1 text-xs transition-colors",
               hideSeen
-                ? "border-amber-500 bg-amber-500/10 text-amber-500"
-                : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                ? "border-amber-500 bg-amber-500 font-medium text-black"
+                : "border-foreground/25 text-foreground/80 hover:border-foreground/70 hover:text-foreground"
             )}
           >
             {hideSeen ? "✓ " : ""}Ocultar las que ya vieron ({seenCount})
@@ -119,6 +147,7 @@ export function DiscoverResults({
               subtitle={movie.release_date?.slice(0, 4)}
               posterUrl={getPosterUrl(movie.poster_path, "w342")}
               seen={seenSet.has(String(movie.id))}
+              rating={movie.vote_average}
             />
           ))}
         </div>

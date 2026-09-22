@@ -12,5 +12,14 @@ export async function GET(request: Request) {
   const res = await fetch(url.toString(), { next: { revalidate: 60 } });
   const data = await res.json();
 
-  return Response.json({ results: (data.results ?? []).slice(0,6) });
+  // TMDB llama "known_for_department" a lo que en el resto de la app es
+  // "department" (Acting | Directing): sin esto la URL guardaba "undefined"
+  type TmdbPerson = { id: number; name: string; known_for_department: string };
+  const results = ((data.results ?? []) as TmdbPerson[]).slice(0, 6).map((p) => ({
+    id: p.id,
+    name: p.name,
+    department: p.known_for_department,
+  }));
+
+  return Response.json({ results });
 }

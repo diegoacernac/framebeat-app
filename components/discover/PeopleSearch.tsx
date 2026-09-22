@@ -62,13 +62,14 @@ export function PeopleSearch({ selected, onChange }: Props) {
           {selected.map((p) => (
             <span
               key={p.id}
-              className="flex items-center gap-1 border border-amber-500 bg-amber-500/10 px-2 py-0.5 text-xs text-amber-500"
+              className="flex items-center gap-1 border border-amber-500 bg-amber-500 px-2.5 py-1 text-sm font-medium text-black"
             >
               {p.name}
               <button
                 type="button"
                 onClick={() => remove(p.id)}
-                className="ml-0.5 hover:text-foreground"
+                aria-label={`Quitar ${p.name}`}
+                className="ml-0.5 opacity-70 hover:opacity-100"
               >
                 ×
               </button>

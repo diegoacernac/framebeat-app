@@ -170,7 +170,7 @@ export async function discoverMedia(filters: {
   decade?: string;
   runtime?: string;
   page?: number;
-  people?: number[];
+  people?: { id: number; department: string }[];
 }) {
   const isTv = filters.kind === "tv";
   const params: Record<string, string> = {
@@ -220,7 +220,10 @@ export async function discoverMedia(filters: {
       params["with_runtime.lte"] = "130";
     }
     if (filters.runtime === "long")   params["with_runtime.gte"] = "131";
-    if (filters.people?.length) params.with_people = filters.people.join("|");
+    if (filters.people?.length) {
+      params.with_people = filters.people.map((p) => p.id).join("|");
+      return discoverMoviesByPeople(params, filters.people, filters.page ?? 1);
+    }
   }
 
   type Paged<T> = { results: T[]; total_pages: number; total_results: number };
@@ -252,6 +255,64 @@ export async function discoverMedia(filters: {
     results,
     totalPages: Math.min(totalPages, 500),
     totalResults,
+  };
+}
+
+// Qué películas cuentan para una persona según su rol: si es director, solo
+// las que dirigió (no las que produjo); si es actor, solo en las que actúa.
+// Sin rol en la URL (links viejos con "undefined") usamos por lo que es
+// conocida la persona según TMDB.
+async function getPersonMovieIds(id: number, department: string) {
+  const [data, role] = await Promise.all([
+    tmdbFetch<{ cast: { id: number }[]; crew: { id: number; job: string }[] }>(
+      `/person/${id}/movie_credits`
+    ),
+    department === "Directing" || department === "Acting"
+      ? department
+      : tmdbFetch<{ known_for_department: string }>(`/person/${id}`).then(
+          (p) => p.known_for_department
+        ),
+  ]);
+  department = role;
+  if (department === "Directing") return data.crew.filter((c) => c.job === "Director").map((c) => c.id);
+  if (department === "Acting") return data.cast.map((c) => c.id);
+  return [...data.cast, ...data.crew].map((c) => c.id);
+}
+
+// with_people de TMDB incluye CUALQUIER crédito (Nolan como productor de
+// "Batman vs Superman", por ejemplo). Traemos todas las páginas de esa
+// búsqueda, dejamos solo las que coinciden con el rol de cada persona y
+// paginamos nosotros. Las filmografías son cortas, así que son pocas páginas.
+const PEOPLE_PAGE_SIZE = 20;
+const PEOPLE_MAX_PAGES = 10;
+
+async function discoverMoviesByPeople(
+  params: Record<string, string>,
+  people: { id: number; department: string }[],
+  page: number
+) {
+  type Paged = { results: TmdbMovieSearchResult[]; total_pages: number };
+  const [first, ...idLists] = await Promise.all([
+    tmdbFetch<Paged>("/discover/movie", { ...params, page: "1" }),
+    ...people.map((p) => getPersonMovieIds(p.id, p.department)),
+  ]);
+  const rest = await Promise.all(
+    Array.from({ length: Math.min(first.total_pages, PEOPLE_MAX_PAGES) - 1 }, (_, i) =>
+      tmdbFetch<Paged>("/discover/movie", { ...params, page: String(i + 2) })
+    )
+  );
+
+  const allowed = new Set(idLists.flat());
+  const seen = new Set<number>();
+  const matches = [first, ...rest]
+    .flatMap((d) => d.results)
+    .filter((m) => allowed.has(m.id) && !seen.has(m.id) && seen.add(m.id));
+
+  const start = (page - 1) * PEOPLE_PAGE_SIZE;
+  return {
+    results: matches.slice(start, start + PEOPLE_PAGE_SIZE),
+    totalPages: Math.max(1, Math.ceil(matches.length / PEOPLE_PAGE_SIZE)),
+    totalResults: matches.length,
   };
 }
 

@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FilmSlateIcon, TelevisionSimpleIcon } from "@phosphor-icons/react/dist/ssr";
+import { CaretDownIcon, FilmSlateIcon, FunnelSimpleIcon, TelevisionSimpleIcon } from "@phosphor-icons/react/dist/ssr";
 import { cn } from "../../lib/utils";
-import { Button } from "../ui/button";
 import { Spinner } from "../ui/spinner";
 import { PeopleSearch, type Person } from "./PeopleSearch";
 import { MOODS, type DiscoverKind } from "@/lib/discover";
@@ -45,7 +44,14 @@ type Props = {
   initialDecade: string;
   initialRuntime: string;
   initialPeople: Person[];
+  // Si la página ya llega con resultados, los filtros arrancan plegados
+  // para que lo primero que se vea sean las películas
+  initialCollapsed: boolean;
 };
+
+// Cuánto esperar tras el último clic antes de buscar: permite marcar
+// varios filtros seguidos sin disparar una búsqueda por cada uno
+const APPLY_DELAY_MS = 350;
 
 export function DiscoverFilters({
   initialKind,
@@ -56,6 +62,7 @@ export function DiscoverFilters({
   initialDecade,
   initialRuntime,
   initialPeople,
+  initialCollapsed,
 }: Props) {
   const router = useRouter();
   const [kind, setKind] = useState<DiscoverKind>(initialKind);
@@ -66,11 +73,10 @@ export function DiscoverFilters({
   const [runtime, setRuntime] = useState(initialRuntime);
   const [mood, setMood] = useState(initialMood);
   const [people, setPeople] = useState<Person[]>(initialPeople);
+  const [open, setOpen] = useState(!initialCollapsed);
 
-  // isPending dura hasta que el servidor trae los resultados nuevos.
-  // pendingAction dice QUÉ botón se pulsó, para poner el spinner solo en ese.
+  // isPending dura hasta que el servidor trae los resultados nuevos
   const [isPending, startTransition] = useTransition();
-  const [pendingAction, setPendingAction] = useState<"search" | "shuffle" | null>(null);
 
   const isTv = kind === "tv";
 
@@ -107,41 +113,49 @@ export function DiscoverFilters({
     return p;
   }
 
-  function navigate(params: URLSearchParams, action: "search" | "shuffle") {
-    setPendingAction(action);
-    startTransition(() => {
-      router.push(`/discover?${params.toString()}`);
-    });
-  }
+  // Los filtros se aplican solos: cada cambio (con un pequeño debounce)
+  // actualiza la URL. replace en vez de push para no llenar el historial
+  // con un paso por cada clic. "Mezclar" vive ahora en DiscoverResults.
+  const query = buildParams().toString();
+  const appliedQuery = useRef(query);
 
-  function handleSearch() {
-    navigate(buildParams(), "search");
-  }
+  useEffect(() => {
+    if (query === appliedQuery.current) return;
+    const timer = setTimeout(() => {
+      appliedQuery.current = query;
+      startTransition(() => {
+        router.replace(`/discover?${query}`, { scroll: false });
+      });
+    }, APPLY_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [query, router]);
 
-  function handleShuffle() {
-    const p = buildParams();
-    p.set("shuffle", "1");
-    // Valor único para que la navegación se dispare aunque los filtros no
-    // hayan cambiado desde el último "Mezclar" — la página real la elige el
-    // server según cuántos resultados reales hay para estos filtros.
-    p.set("r", Math.random().toString(36).slice(2, 8));
-    navigate(p, "shuffle");
-  }
+  // Resumen para la barra plegada: "Christopher Nolan · Netflix · 2010s"
+  const summary = [
+    ...(!isTv ? people.map((p) => p.name) : []),
+    ...PLATFORMS.filter((p) => providers.has(p.id)).map((p) => p.name),
+    MOODS.find((m) => m.id === mood)?.label,
+    DECADES.find((d) => d.id === decade)?.label,
+    !isTv ? RUNTIMES.find((r) => r.id === runtime)?.label.replace(/\s+/g, " ") : undefined,
+    acclaimed ? "★ 7.5+" : undefined,
+  ].filter((label): label is string => Boolean(label));
 
   // Clase helper para no repetir la lógica de active/inactive en cada botón
   function pillClass(active: boolean) {
     return cn(
-      "border px-3 py-1 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-border disabled:hover:text-muted-foreground",
+      "border px-3 py-1 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-foreground/25 disabled:hover:text-foreground/80",
+      // Activo: relleno sólido, se distingue de un vistazo aunque haya muchos
       active
-        ? "border-amber-500 bg-amber-500/10 text-amber-500"
-        : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+        ? "border-amber-500 bg-amber-500 font-medium text-black"
+        : "border-foreground/25 text-foreground/80 hover:border-foreground/70 hover:text-foreground"
     );
   }
 
   return (
     // data-pending: DiscoverResults lo detecta con CSS para atenuar los resultados viejos
     <div className="space-y-6" data-pending={isPending || undefined}>
-      {/* Películas / Series */}
+      {/* Películas / Series + abrir/plegar filtros */}
+      <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-3">
         <div className="inline-flex border" role="group" aria-label="Tipo">
           {KINDS.map((k) => {
@@ -156,8 +170,8 @@ export function DiscoverFilters({
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 text-sm transition-colors",
                   active
-                    ? "bg-amber-500/10 text-amber-500"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-amber-500 font-medium text-black"
+                    : "text-foreground/80 hover:text-foreground"
                 )}
               >
                 <KindIcon size={16} weight={active ? "fill" : "regular"} />
@@ -167,7 +181,45 @@ export function DiscoverFilters({
           })}
         </div>
 
-        {/* Solo lo que se puede ver en Perú */}
+        {isPending && <Spinner className="text-muted-foreground" />}
+
+
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          aria-controls="discover-filters"
+          aria-label="Filtros"
+          className="ml-auto flex items-center gap-1.5 border border-foreground/25 px-3 py-1.5 text-sm text-foreground/80 transition-colors hover:border-foreground/70 hover:text-foreground"
+        >
+          <FunnelSimpleIcon size={16} className="sm:hidden" />
+          <span className="hidden sm:inline">Filtros</span>
+          {summary.length > 0 && (
+            <span className="bg-amber-500 px-1.5 text-xs font-medium tabular-nums text-black">
+              {summary.length}
+            </span>
+          )}
+          <CaretDownIcon size={14} className={cn("transition-transform", open && "rotate-180")} />
+        </button>
+      </div>
+
+      {/* Plegado: una línea con lo que está aplicado (clic para editar) */}
+      {!open && summary.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="block text-left text-sm text-muted-foreground transition-colors hover:text-foreground animate-in fade-in duration-200"
+        >
+          {summary.join(" · ")}
+          {!available && " · Incluye sin dónde ver"}
+        </button>
+      )}
+      </div>
+
+      {open && (
+      <div id="discover-filters" className="space-y-6 animate-in fade-in slide-in-from-top-1 duration-200">
+      {/* Solo lo que se puede ver en Perú */}
+      <div>
         <button
           type="button"
           onClick={() => setAvailable((a) => !a)}
@@ -256,27 +308,15 @@ export function DiscoverFilters({
         </div>
       )}
 
-      {/* Acciones */}
-      <div className="flex gap-2">
-        <Button onClick={handleSearch} disabled={isPending}>
-          {isPending && pendingAction === "search" ? (
-            <>
-              <Spinner /> Buscando...
-            </>
-          ) : (
-            "Buscar"
-          )}
-        </Button>
-        <Button variant="outline" onClick={handleShuffle} disabled={isPending}>
-          {isPending && pendingAction === "shuffle" ? (
-            <>
-              <Spinner /> Mezclando...
-            </>
-          ) : (
-            "Mezclar"
-          )}
-        </Button>
+      <button
+        type="button"
+        onClick={() => setOpen(false)}
+        className="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
+      >
+        Ocultar filtros
+      </button>
       </div>
+      )}
     </div>
   );
 }
