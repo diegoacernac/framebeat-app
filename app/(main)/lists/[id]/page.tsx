@@ -18,7 +18,8 @@ import { ListSuggestions } from "@/components/lists/ListSuggestions";
 import { ListItemRow } from "@/components/lists/ListItemRow";
 import { DeleteListButton } from "@/components/lists/DeleteListButton";
 import { RandomPickButton } from "@/components/lists/RandomPickButton";
-import { CaretRightIcon } from "@phosphor-icons/react/dist/ssr";
+import { CaretRightIcon, ScalesIcon } from "@phosphor-icons/react/dist/ssr";
+import { Button } from "@/components/ui/button";
 import { getMediaHref } from "@/lib/media";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -178,10 +179,23 @@ export default async function ListDetailPage({
         <Link href="/lists" className="text-xs text-muted-foreground hover:underline">
           ← Mis listas
         </Link>
-        <h1 className="text-2xl font-semibold">{list.title}</h1>
-        {list.description && (
-          <p className="text-sm text-muted-foreground">{list.description}</p>
-        )}
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 space-y-2">
+            <h1 className="text-2xl font-semibold">{list.title}</h1>
+            {list.description && (
+              <p className="text-sm text-muted-foreground">{list.description}</p>
+            )}
+          </div>
+          {/* Comparar gustos va en su propia vista: aquí recargaría la lista,
+              sobre todo en móvil. Solo tiene sentido con 2+ miembros. */}
+          {members.filter((m) => m.status === "accepted").length >= 2 && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/lists/${listId}/comparar`}>
+                <ScalesIcon size={14} /> Comparar gustos
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-8 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-12 lg:space-y-0">

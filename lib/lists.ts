@@ -1,27 +1,10 @@
-import { and, desc, eq, inArray, ne } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { listItems, listMembers, mediaItems, sharedLists } from "./db/schema";
 import type { MediaType } from "./media";
 
 // Invitaciones pendientes no cuentan como membresía en ningún lado
 export const acceptedMember = eq(listMembers.status, "accepted");
-
-// Quienes comparten al menos una lista con el usuario (su pareja, en la práctica)
-export async function getPartnerUserIds(userId: string) {
-  const myLists = db
-    .select({ listId: listMembers.listId })
-    .from(listMembers)
-    .where(and(eq(listMembers.userId, userId), acceptedMember));
-
-  const others = await db
-    .selectDistinct({ userId: listMembers.userId })
-    .from(listMembers)
-    .where(
-      and(inArray(listMembers.listId, myLists), ne(listMembers.userId, userId), acceptedMember)
-    );
-
-  return others.map((o) => o.userId);
-}
 
 // Las listas del usuario y, para cada una, si ya contiene este título
 // (listItemId) o no (null). Lo usa el botón "Añadir a lista" de las fichas.
