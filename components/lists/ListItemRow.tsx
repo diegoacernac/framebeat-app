@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
 import { StarRating } from "../ratings/StarRatings";
 import { useOptimistic, useState, useTransition } from "react";
-import { CheckIcon } from "@phosphor-icons/react/dist/ssr";
+import { CheckIcon, TrashIcon } from "@phosphor-icons/react/dist/ssr";
 import { Spinner } from "../ui/spinner";
 import { cn } from "@/lib/utils";
 import { getMediaHref } from "@/lib/media";
@@ -177,9 +177,7 @@ export function ListItemRow({
               </div>
             )}
           </div>
-        ) : (
-          <p className="text-xs text-muted-foreground">Nadie ha calificado aún.</p>
-        )}
+        ) : null /* Sin calificaciones no mostramos nada: repetido en cada fila era ruido */}
 
         <div className="flex flex-wrap items-center gap-2 pt-1">
           <Button
@@ -204,21 +202,18 @@ export function ListItemRow({
             </Button>
           )}
 
+          {/* Solo ícono: es una acción secundaria y el texto en cada fila recargaba */}
           <Button
             type="button"
-            size="sm"
+            size="icon-sm"
             variant="ghost"
             onClick={removeItem}
             disabled={removing}
-            className="ml-auto h-7 text-xs text-muted-foreground hover:text-destructive"
+            aria-label={`Quitar "${title}" de la lista`}
+            title="Quitar de la lista"
+            className="ml-auto text-muted-foreground hover:text-destructive"
           >
-            {removing || collapsing ? (
-              <>
-                <Spinner size={12} /> Quitando
-              </>
-            ) : (
-              "Quitar"
-            )}
+            {removing || collapsing ? <Spinner size={14} /> : <TrashIcon size={16} />}
           </Button>
         </div>
       </div>

@@ -327,8 +327,33 @@ export async function searchTv(query: string) {
   return data.results;
 }
 
+// TMDB deja en inglés varios géneros de series aunque se pidan en es-MX
+// ("Sci-Fi & Fantasy", "Action & Adventure"). Los traducimos por id.
+const TV_GENRES_ES: Record<number, string> = {
+  10759: "Acción y aventura",
+  16: "Animación",
+  35: "Comedia",
+  80: "Crimen",
+  99: "Documental",
+  18: "Drama",
+  10751: "Familia",
+  10762: "Infantil",
+  9648: "Misterio",
+  10763: "Noticias",
+  10764: "Reality",
+  10765: "Ciencia ficción y fantasía",
+  10766: "Telenovela",
+  10767: "Talk show",
+  10768: "Bélica y política",
+  37: "Western",
+};
+
 export async function getTv(id: number) {
-  return tmdbFetch<TmdbTvDetail>(`/tv/${id}`);
+  const tv = await tmdbFetch<TmdbTvDetail>(`/tv/${id}`);
+  return {
+    ...tv,
+    genres: tv.genres.map((g) => ({ ...g, name: TV_GENRES_ES[g.id] ?? g.name })),
+  };
 }
 
 export async function getTvCredits(tvId: number) {

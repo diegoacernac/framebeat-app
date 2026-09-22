@@ -1,6 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import { CastRow } from "@/components/media/CastRow";
+import { DetailHero } from "@/components/media/DetailHero";
+import { ExpandableText } from "@/components/ui/expandable-text";
+import { RateShortcut } from "@/components/ratings/RateShortcut";
 import { eq, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { getMovie, getPosterUrl, getBackdropUrl, getMovieWatchProviders, getMovieCredits } from "@/lib/tmdb";
@@ -95,110 +97,87 @@ export default async function MoviePage({
 
   return (
     <>
-      {backdropUrl && (
-        <div className="relative h-48 w-full overflow-hidden md:h-64">
-          <Image
-            src={backdropUrl}
-            alt={movie.title}
-            fill
-            className="object-cover object-top"
-            sizes="100vw"
-            // Es el LCP: se pide primero (priority está deprecado en Next 16)
-            loading="eager"
-            fetchPriority="high"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-        </div>
-      )}
-
-      <main className="mx-auto w-full max-w-4xl flex-1 p-4 sm:p-8 lg:max-w-6xl">
-        <div className="flex flex-col gap-8 md:flex-row">
-          {posterUrl && (
-            <Image
-              src={posterUrl}
-              alt={movie.title}
-              width={200}
-              height={300}
-              // self-start + aspect fijo: si la columna de texto crece (sinopsis
-              // larga, menú de listas abierto) el poster no se estira con ella
-              className="aspect-[2/3] h-auto w-[200px] shrink-0 self-start rounded-sm object-cover shadow-lg"
-            />
-          )}
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <h1 className="text-3xl font-semibold">{movie.title}</h1>
-              {movie.tagline && (
-                <p className="italic text-muted-foreground">{movie.tagline}</p>
-              )}
-              <div className="flex flex-wrap items-center gap-3 pt-1 text-sm text-muted-foreground">
-                {year && <span>{year}</span>}
-                {runtime && <span>{runtime}</span>}
-                {movie.vote_average > 0 && (
-                  <span className="text-amber-500 font-medium">
-                    ★ {movie.vote_average.toFixed(1)}
-                    <span className="text-muted-foreground font-normal">/10</span>
-                  </span>
-                )}
-              </div>
-              {directors.length > 0 && (
-                <p className="pt-1 text-sm text-muted-foreground">
-                  Dirigida por{" "}
-                  {directors.map((d, i) => (
-                    <span key={d.id}>
-                      {i > 0 && (i === directors.length - 1 ? " y " : ", ")}
-                      <Link
-                        href={getPersonDiscoverHref(d.id, d.name, "Directing")}
-                        className="font-medium text-foreground underline-offset-4 transition-colors hover:text-amber-500 hover:underline"
-                      >
-                        {d.name}
-                      </Link>
-                    </span>
-                  ))}
-                </p>
-              )}
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {movie.genres.map((g) => (
-                <span key={g.id} className="border px-2 py-0.5 text-xs">
-                  {g.name}
-                </span>
-              ))}
-            </div>
-
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              {movie.overview}
-            </p>
-
-            {user && (
-              <AddToListButton
-                lists={myLists}
-                mediaType="movie"
-                externalId={String(tmdbId)}
-                title={movie.title}
-                // Mismo tamaño que usa el buscador de la lista
-                posterUrl={getPosterUrl(movie.poster_path, "w185")}
-                metadata={{ overview: movie.overview, year }}
-              />
+      <DetailHero
+        title={movie.title}
+        backdropUrl={backdropUrl}
+        posterUrl={posterUrl}
+        head={
+          <>
+            <h1 className="text-2xl font-semibold leading-tight text-balance sm:text-3xl md:text-4xl">
+              {movie.title}
+            </h1>
+            {movie.tagline && (
+              <p className="hidden italic text-muted-foreground sm:block">{movie.tagline}</p>
             )}
-          </div>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-sm text-muted-foreground">
+              {year && <span>{year}</span>}
+              {runtime && <span>{runtime}</span>}
+              {movie.vote_average > 0 && (
+                <span className="font-medium text-amber-500">
+                  ★ {movie.vote_average.toFixed(1)}
+                  <span className="font-normal text-muted-foreground">/10</span>
+                </span>
+              )}
+            </div>
+            {directors.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                <span className="hidden sm:inline">Dirigida por </span>
+                <span className="sm:hidden">De </span>
+                {directors.map((d, i) => (
+                  <span key={d.id}>
+                    {i > 0 && (i === directors.length - 1 ? " y " : ", ")}
+                    <Link
+                      href={getPersonDiscoverHref(d.id, d.name, "Directing")}
+                      className="font-medium text-foreground underline-offset-4 transition-colors hover:text-amber-500 hover:underline"
+                    >
+                      {d.name}
+                    </Link>
+                  </span>
+                ))}
+              </p>
+            )}
+          </>
+        }
+      >
+        <div className="flex flex-wrap gap-2">
+          {movie.genres.map((g) => (
+            <span key={g.id} className="border border-foreground/15 bg-background/40 px-2 py-0.5 text-xs backdrop-blur">
+              {g.name}
+            </span>
+          ))}
         </div>
 
+        {movie.overview && (
+          <ExpandableText
+            text={movie.overview}
+            className="max-w-3xl text-sm leading-relaxed text-muted-foreground"
+          />
+        )}
+
+        {user && (
+          <div className="flex flex-wrap items-start gap-2">
+            <AddToListButton
+              lists={myLists}
+              mediaType="movie"
+              externalId={String(tmdbId)}
+              title={movie.title}
+              // Mismo tamaño que usa el buscador de la lista
+              posterUrl={getPosterUrl(movie.poster_path, "w185")}
+              metadata={{ overview: movie.overview, year }}
+            />
+            <RateShortcut href="#calificar" stars={userRating?.stars ?? null} />
+          </div>
+        )}
+      </DetailHero>
+
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 pb-8 sm:px-8 lg:max-w-6xl">
         <section className="mt-8">
           <WatchProviders providers={watchProviders} title={movie.title} />
         </section>
 
-        {topCast.length > 0 && (
-          <section className="mt-8">
-            <h2 className="mb-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Reparto
-            </h2>
-            <CastRow cast={topCast} />
-          </section>
-        )}
-
+        {/* Calificar va antes del reparto: es lo principal que se hace aquí */}
         {user ? (
-          <section className="mt-10 space-y-4">
+          <section id="calificar" className="mt-10 scroll-mt-24 space-y-4">
             <h2 className="text-xl font-semibold">Tu calificación</h2>
             <RatingForm
               mediaType="movie"
@@ -222,6 +201,15 @@ export default async function MoviePage({
             </Link>{" "}
             para calificar.
           </p>
+        )}
+
+        {topCast.length > 0 && (
+          <section className="mt-8">
+            <h2 className="mb-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Reparto
+            </h2>
+            <CastRow cast={topCast} />
+          </section>
         )}
 
         <section className="mt-10 space-y-4">

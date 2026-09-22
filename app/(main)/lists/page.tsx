@@ -64,7 +64,7 @@ export default async function ListsPage() {
   }, {});
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 space-y-6 p-4 sm:p-8 lg:max-w-6xl animate-in fade-in duration-300">
+    <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-4 sm:p-8 lg:max-w-6xl animate-in fade-in duration-300">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Mis listas</h1>
         <Button asChild>

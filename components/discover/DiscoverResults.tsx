@@ -20,6 +20,8 @@ type Props = {
   // IDs TMDB que alguno de los dos ya vio (calificó o marcó como vista)
   seenIds: string[];
   kind: "movie" | "tv";
+  // Sin filtros: se muestra lo más popular en Perú, con su propio título
+  popular?: boolean;
 };
 
 // Mientras DiscoverFilters está navegando (marca data-pending), los resultados
@@ -35,6 +37,7 @@ export function DiscoverResults({
   totalResults,
   filterQuery,
   shuffled,
+  popular = false,
   seenIds,
   kind,
 }: Props) {
@@ -94,6 +97,11 @@ export function DiscoverResults({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <p className="text-xs text-muted-foreground">
+            {popular && !shuffled && (
+              <span className="mr-2 font-medium uppercase tracking-wider text-foreground">
+                Populares ahora en Perú
+              </span>
+            )}
             {shuffled ? "Selección al azar entre " : ""}
             {totalResults.toLocaleString("es-PE")}{" "}
             {totalResults === 1 ? noun[0] : noun[1]}

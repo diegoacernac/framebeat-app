@@ -58,7 +58,7 @@ export default async function ProfilePage({
   const initials = profile.username.slice(0, 2).toUpperCase();
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 p-4 sm:p-8 lg:max-w-6xl animate-in fade-in duration-300">
+    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 p-4 sm:p-8 lg:max-w-6xl animate-in fade-in duration-300">
       <div className="flex items-center gap-4">
         <Avatar className="size-16">
           {profile.avatarUrl && (

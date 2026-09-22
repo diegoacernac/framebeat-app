@@ -5,7 +5,7 @@ export default function Loading() {
     <main
       role="status"
       aria-label="Cargando listas"
-      className="mx-auto w-full max-w-2xl flex-1 space-y-6 p-4 sm:p-8 lg:max-w-6xl"
+      className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-4 sm:p-8 lg:max-w-6xl"
     >
       <div className="flex items-center justify-between gap-4">
         <Skeleton className="h-8 w-36" />

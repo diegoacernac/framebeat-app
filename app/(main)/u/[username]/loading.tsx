@@ -6,7 +6,7 @@ export default function Loading() {
     <main
       role="status"
       aria-label="Cargando perfil"
-      className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 p-4 sm:p-8 lg:max-w-6xl"
+      className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 p-4 sm:p-8 lg:max-w-6xl"
     >
       {/* Avatar + nombre */}
       <div className="flex items-center gap-4">

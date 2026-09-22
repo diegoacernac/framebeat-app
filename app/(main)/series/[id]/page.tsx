@@ -1,6 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CastRow } from "@/components/media/CastRow";
+import { DetailHero } from "@/components/media/DetailHero";
+import { ExpandableText } from "@/components/ui/expandable-text";
+import { RateShortcut } from "@/components/ratings/RateShortcut";
 import { eq, and, inArray, like } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import {
@@ -95,89 +98,67 @@ export default async function SeriesPage({
 
   return (
     <>
-      {backdropUrl && (
-        <div className="relative h-48 w-full overflow-hidden md:h-64">
-          <Image
-            src={backdropUrl}
-            alt={tv.name}
-            fill
-            className="object-cover object-top"
-            sizes="100vw"
-            // Es el LCP: se pide primero (priority está deprecado en Next 16)
-            loading="eager"
-            fetchPriority="high"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-        </div>
-      )}
-
-      <main className="mx-auto w-full max-w-4xl flex-1 p-4 sm:p-8 lg:max-w-6xl">
-        <div className="flex flex-col gap-8 md:flex-row">
-          {posterUrl && (
-            <Image
-              src={posterUrl}
-              alt={tv.name}
-              width={200}
-              height={300}
-              // self-start + aspect fijo: si la columna de texto crece (sinopsis
-              // larga, menú de listas abierto) el poster no se estira con ella
-              className="aspect-[2/3] h-auto w-[200px] shrink-0 self-start rounded-sm object-cover shadow-lg"
-            />
-          )}
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <h1 className="text-3xl font-semibold">{tv.name}</h1>
-              <div className="flex flex-wrap items-center gap-3 pt-1 text-sm text-muted-foreground">
-                {year && <span>{year}</span>}
-                <span>{tv.number_of_seasons} temporadas</span>
-                {tv.vote_average > 0 && (
-                  <span className="text-amber-500 font-medium">
-                    ★ {tv.vote_average.toFixed(1)}
-                    <span className="text-muted-foreground font-normal">/10</span>
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {tv.genres.map((g) => (
-                <span key={g.id} className="border px-2 py-0.5 text-xs">
-                  {g.name}
+      <DetailHero
+        title={tv.name}
+        backdropUrl={backdropUrl}
+        posterUrl={posterUrl}
+        head={
+          <>
+            <h1 className="text-2xl font-semibold leading-tight text-balance sm:text-3xl md:text-4xl">
+              {tv.name}
+            </h1>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-sm text-muted-foreground">
+              {year && <span>{year}</span>}
+              <span>
+                {tv.number_of_seasons} {tv.number_of_seasons === 1 ? "temporada" : "temporadas"}
+              </span>
+              {tv.vote_average > 0 && (
+                <span className="font-medium text-amber-500">
+                  ★ {tv.vote_average.toFixed(1)}
+                  <span className="font-normal text-muted-foreground">/10</span>
                 </span>
-              ))}
+              )}
             </div>
-
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              {tv.overview}
-            </p>
-
-            {user && (
-              <AddToListButton
-                lists={myLists}
-                mediaType="tv"
-                externalId={String(tvId)}
-                title={tv.name}
-                posterUrl={getPosterUrl(tv.poster_path, "w185")}
-                metadata={{ overview: tv.overview, year }}
-              />
-            )}
-          </div>
+          </>
+        }
+      >
+        <div className="flex flex-wrap gap-2">
+          {tv.genres.map((g) => (
+            <span key={g.id} className="border border-foreground/15 bg-background/40 px-2 py-0.5 text-xs backdrop-blur">
+              {g.name}
+            </span>
+          ))}
         </div>
 
+        {tv.overview && (
+          <ExpandableText
+            text={tv.overview}
+            className="max-w-3xl text-sm leading-relaxed text-muted-foreground"
+          />
+        )}
+
+        {user && (
+          <div className="flex flex-wrap items-start gap-2">
+            <AddToListButton
+              lists={myLists}
+              mediaType="tv"
+              externalId={String(tvId)}
+              title={tv.name}
+              posterUrl={getPosterUrl(tv.poster_path, "w185")}
+              metadata={{ overview: tv.overview, year }}
+            />
+            {/* Las series se califican por temporada: lleva a esa sección */}
+            <RateShortcut href="#temporadas" stars={null} label="Calificar temporadas" />
+          </div>
+        )}
+      </DetailHero>
+
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 pb-8 sm:px-8 lg:max-w-6xl">
         <section className="mt-8">
           <WatchProviders providers={watchProviders} title={tv.name} />
         </section>
 
-        {topCast.length > 0 && (
-          <section className="mt-8">
-            <h2 className="mb-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Reparto
-            </h2>
-            <CastRow cast={topCast} />
-          </section>
-        )}
-
-        <section className="mt-10 space-y-6">
+        <section id="temporadas" className="mt-10 scroll-mt-24 space-y-6">
           <h2 className="text-xl font-semibold">Temporadas</h2>
 
           <SeasonPicker seasons={realSeasons} selected={selectedSeasonNumber} />
@@ -250,6 +231,14 @@ export default async function SeriesPage({
             );
           })()}
         </section>
+        {topCast.length > 0 && (
+          <section className="mt-8">
+            <h2 className="mb-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Reparto
+            </h2>
+            <CastRow cast={topCast} />
+          </section>
+        )}
       </main>
     </>
   );

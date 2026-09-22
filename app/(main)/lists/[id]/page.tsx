@@ -168,7 +168,7 @@ export default async function ListDetailPage({
   return (
     // En web: la lista y sugerencias a la izquierda, añadir/miembros en una
     // columna lateral fija. En móvil todo va en una sola columna, en ese orden.
-    <main className="mx-auto w-full max-w-2xl flex-1 space-y-8 p-4 sm:p-8 lg:max-w-6xl animate-in fade-in duration-300">
+    <main className="mx-auto w-full max-w-4xl flex-1 space-y-8 p-4 sm:p-8 lg:max-w-6xl animate-in fade-in duration-300">
       {/* Header */}
       <div className="space-y-2">
         <Link href="/lists" className="text-xs text-muted-foreground hover:underline">

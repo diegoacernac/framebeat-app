@@ -33,6 +33,10 @@ export function Header({ user, profile }: HeaderProps) {
               </>
             ) : (
               <>
+                {/* Funciona sin cuenta: es la mejor puerta de entrada */}
+                <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
+                  <Link href="/discover">¿Qué vemos?</Link>
+                </Button>
                 <Button variant="ghost" size="sm" asChild>
                   <Link href="/login">Entrar</Link>
                 </Button>

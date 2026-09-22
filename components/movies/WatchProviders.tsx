@@ -6,6 +6,8 @@ import {
 } from "@/lib/tmdb";
 import { getProviderLink } from "@/lib/watchLinks";
 
+type ProviderEntry = { provider: WatchProvider; note?: string };
+
 function ProviderList({
   title,
   providers,
@@ -13,14 +15,14 @@ function ProviderList({
   aggregateLink,
 }: {
   title: string;
-  providers: WatchProvider[];
+  providers: ProviderEntry[];
   mediaTitle: string;
   aggregateLink: string;
 }) {
   if (!providers.length) return null;
 
   const sorted = [...providers].sort(
-    (a, b) => a.display_priority - b.display_priority
+    (a, b) => a.provider.display_priority - b.provider.display_priority
   );
 
   return (
@@ -30,7 +32,7 @@ function ProviderList({
       </h3>
 
       <div className="flex flex-wrap gap-2">
-        {sorted.map((p) => {
+        {sorted.map(({ provider: p, note }) => {
           const logo = getProviderLogoUrl(p.logo_path);
           const href = getProviderLink(p.provider_id, mediaTitle, aggregateLink);
           return (
@@ -53,12 +55,29 @@ function ProviderList({
                 />
               )}
               <span>{p.provider_name}</span>
+              {note && <span className="text-muted-foreground">· {note}</span>}
             </a>
           );
         })}
       </div>
     </div>
   );
+}
+
+// Casi siempre las mismas tiendas alquilan y venden: una sola tarjeta por
+// plataforma, con una nota de qué ofrece ("alquiler", "compra" o ambas)
+function rentOrBuy(providers: WatchProvidersByCountry): ProviderEntry[] {
+  const byId = new Map<number, { provider: WatchProvider; rent: boolean; buy: boolean }>();
+  for (const p of providers.rent ?? []) byId.set(p.provider_id, { provider: p, rent: true, buy: false });
+  for (const p of providers.buy ?? []) {
+    const entry = byId.get(p.provider_id);
+    if (entry) entry.buy = true;
+    else byId.set(p.provider_id, { provider: p, rent: false, buy: true });
+  }
+  return [...byId.values()].map(({ provider, rent, buy }) => ({
+    provider,
+    note: rent && buy ? "alquiler y compra" : rent ? "alquiler" : "compra",
+  }));
 }
 
 export function WatchProviders({
@@ -84,7 +103,7 @@ export function WatchProviders({
   if (!hasAny) {
     return (
       <p className="text-sm text-muted-foreground">
-        No disponible en streaming, alquiler en Perú (según TMDB).
+        No disponible en streaming, alquiler ni compra en Perú (según TMDB).
       </p>
     );
   }
@@ -94,19 +113,13 @@ export function WatchProviders({
       <h2 className="text-lg font-semibold">Disponible en Perú</h2>
       <ProviderList
         title="Suscripción"
-        providers={providers.flatrate ?? []}
+        providers={(providers.flatrate ?? []).map((provider) => ({ provider }))}
         mediaTitle={title}
         aggregateLink={providers.link}
       />
       <ProviderList
-        title="Alquiler"
-        providers={providers.rent ?? []}
-        mediaTitle={title}
-        aggregateLink={providers.link}
-      />
-      <ProviderList
-        title="Compra"
-        providers={providers.buy ?? []}
+        title="Alquiler o compra"
+        providers={rentOrBuy(providers)}
         mediaTitle={title}
         aggregateLink={providers.link}
       />

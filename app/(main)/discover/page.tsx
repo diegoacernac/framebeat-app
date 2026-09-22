@@ -57,7 +57,9 @@ export default async function DiscoverPage({
   let startPage = 1;
   let seenIds: string[] = [];
 
-  if (hasFilters) {
+  // Sin filtros también se busca: lo más popular con dónde ver en Perú.
+  // Así la página nunca abre vacía.
+  {
     startPage = Math.max(1, Number(params.page) || 1);
     // TMDB y "qué ya vieron" en paralelo: no dependen uno del otro
     const [discovered, seen] = await Promise.all([
@@ -103,7 +105,8 @@ export default async function DiscoverPage({
         initialDecade={filters.decade}
         initialRuntime={filters.runtime}
         initialPeople={people}
-        initialCollapsed={hasFilters}
+        // Siempre plegados al entrar: primero se ven las películas
+        initialCollapsed
       />
 
       {result ? (
@@ -118,10 +121,11 @@ export default async function DiscoverPage({
           shuffled={shuffle}
           seenIds={seenIds}
           kind={kind}
+          popular={!hasFilters}
         />
       ) : (
         <p className="text-sm text-muted-foreground">
-          Selecciona al menos una plataforma, situación o época para ver opciones.
+          No se pudieron cargar resultados. Intenta de nuevo.
         </p>
       )}
     </main>

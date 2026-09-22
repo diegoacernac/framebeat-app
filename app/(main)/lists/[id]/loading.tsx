@@ -8,7 +8,7 @@ export default function Loading() {
     <main
       role="status"
       aria-label="Cargando lista"
-      className="mx-auto w-full max-w-2xl flex-1 space-y-8 p-4 sm:p-8 lg:max-w-6xl"
+      className="mx-auto w-full max-w-4xl flex-1 space-y-8 p-4 sm:p-8 lg:max-w-6xl"
     >
       <div className="space-y-2">
         <Skeleton className="h-3 w-20" />

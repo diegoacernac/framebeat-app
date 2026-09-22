@@ -204,14 +204,21 @@ export function DiscoverFilters({
       </div>
 
       {/* Plegado: una línea con lo que está aplicado (clic para editar) */}
-      {!open && summary.length > 0 && (
+      {!open && (
         <button
           type="button"
           onClick={() => setOpen(true)}
           className="block text-left text-sm text-muted-foreground transition-colors hover:text-foreground animate-in fade-in duration-200"
         >
-          {summary.join(" · ")}
-          {!available && " · Incluye sin dónde ver"}
+          {summary.length > 0 ? (
+            <>
+              {summary.join(" · ")}
+              {!available && " · Incluye sin dónde ver"}
+            </>
+          ) : (
+            // Sin filtros: invita a afinar la búsqueda
+            <>Afina por plataforma, situación, época o director →</>
+          )}
         </button>
       )}
       </div>

@@ -49,7 +49,7 @@ function getNavItems(username: string): NavItem[] {
     {
       href: "/stats",
       label: "Estadísticas",
-      shortLabel: "Stats",
+      shortLabel: "Estadísticas",
       icon: ChartBar,
       matches: (p) => p.startsWith("/stats"),
     },
@@ -127,7 +127,8 @@ export function BottomNav({ username }: { username: string }) {
                     "group-active:scale-90"
                   )}
                 />
-                <span className="leading-none">{item.shortLabel}</span>
+                {/* tracking-tighter: "Estadísticas" entra aun en pantallas de 360px */}
+                <span className="max-w-full truncate px-0.5 leading-none tracking-tighter">{item.shortLabel}</span>
               </Link>
             </li>
           );

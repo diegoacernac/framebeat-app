@@ -120,8 +120,10 @@ export function MediaCard({
           </p>
         )}
         {showStars !== undefined && showStars > 0 && (
-          <p className="mt-0.5 text-xs text-yellow-600 dark:text-yellow-500">
-            {"★".repeat(showStars)}
+          // Las 5 estrellas (vacías en gris): se lee "4 de 5" de un vistazo
+          <p className="mt-1 text-sm leading-none tracking-wider" aria-label={`${showStars} de 5 estrellas`}>
+            <span className="text-amber-500">{"★".repeat(showStars)}</span>
+            <span className="text-foreground/20">{"★".repeat(5 - showStars)}</span>
           </p>
         )}
       </div>
