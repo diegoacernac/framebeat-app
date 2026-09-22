@@ -11,6 +11,10 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
+// RLS activado en todas las tablas y SIN políticas: la clave pública de
+// Supabase (que va en el navegador) no puede leer ni escribir nada. La app
+// accede a los datos solo desde el servidor con Drizzle (DATABASE_URL), que
+// no está sujeto a RLS, así que esto no la afecta.
 export const profiles = pgTable("profiles", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").notNull().unique(),
@@ -19,7 +23,7 @@ export const profiles = pgTable("profiles", {
   avatarUrl: text("avatar_url"),
   bio: text("bio"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}).enableRLS();
 
 export const mediaItems = pgTable(
   "media_items",
@@ -35,7 +39,7 @@ export const mediaItems = pgTable(
   (table) => ({
     uniqueExternal: unique().on(table.type, table.externalId),
   })
-);
+).enableRLS();
 
 export const ratings = pgTable(
   "ratings",
@@ -53,7 +57,7 @@ export const ratings = pgTable(
   (table) => ({
     uniqueUserMedia: unique().on(table.userId, table.mediaItemId),
   })
-);
+).enableRLS();
 
 export const mediaItemsRelations = relations(mediaItems, ({ many }) => ({
   ratings: many(ratings),
@@ -72,7 +76,7 @@ export const sharedLists = pgTable("shared_lists", {
   title: varchar("title", { length: 200 }).notNull(),
   description: text("description"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}).enableRLS();
 
 export const listMembers = pgTable(
   "list_members",
@@ -84,12 +88,20 @@ export const listMembers = pgTable(
     role: varchar("role", { length: 10 })
       .notNull()
       .$type<"owner" | "member">(),
+    // Invitar no te mete en la lista: queda "pending" hasta que la persona
+    // acepta. Solo "accepted" da acceso y hace visibles las calificaciones
+    // entre miembros (ver lib/visibility.ts). Los miembros que ya existían
+    // quedan como aceptados por el default.
+    status: varchar("status", { length: 10 })
+      .notNull()
+      .default("accepted")
+      .$type<"pending" | "accepted">(),
     joinedAt: timestamp("joined_at").defaultNow().notNull(),
   },
   (table) => ({
     pk: primaryKey({ columns: [table.listId, table.userId] }),
   })
-);
+).enableRLS();
 
 export const listItems = pgTable(
   "list_items",
@@ -108,7 +120,7 @@ export const listItems = pgTable(
   (table) => ({
     uniqueListMedia: unique().on(table.listId, table.mediaItemId),
   })
-);
+).enableRLS();
 export const listItemProgress = pgTable(
   "list_item_progress",
   {
@@ -126,7 +138,7 @@ export const listItemProgress = pgTable(
       columns: [table.listId, table.mediaItemId, table.userId],
     }),
   })
-);
+).enableRLS();
 export const sharedListsRelations = relations(sharedLists, ({ many }) => ({
   members: many(listMembers),
   items: many(listItems),

@@ -3,17 +3,22 @@ import { db } from "@/lib/db";
 import { listItems, listMembers, mediaItems, sharedLists } from "./db/schema";
 import type { MediaType } from "./media";
 
+// Invitaciones pendientes no cuentan como membresía en ningún lado
+export const acceptedMember = eq(listMembers.status, "accepted");
+
 // Quienes comparten al menos una lista con el usuario (su pareja, en la práctica)
 export async function getPartnerUserIds(userId: string) {
   const myLists = db
     .select({ listId: listMembers.listId })
     .from(listMembers)
-    .where(eq(listMembers.userId, userId));
+    .where(and(eq(listMembers.userId, userId), acceptedMember));
 
   const others = await db
     .selectDistinct({ userId: listMembers.userId })
     .from(listMembers)
-    .where(and(inArray(listMembers.listId, myLists), ne(listMembers.userId, userId)));
+    .where(
+      and(inArray(listMembers.listId, myLists), ne(listMembers.userId, userId), acceptedMember)
+    );
 
   return others.map((o) => o.userId);
 }
@@ -30,7 +35,7 @@ export async function getUserListsWithMedia(
       .select({ id: sharedLists.id, title: sharedLists.title })
       .from(listMembers)
       .innerJoin(sharedLists, eq(listMembers.listId, sharedLists.id))
-      .where(eq(listMembers.userId, userId))
+      .where(and(eq(listMembers.userId, userId), acceptedMember))
       .orderBy(desc(sharedLists.createdAt)),
     db.query.mediaItems.findFirst({
       where: and(eq(mediaItems.type, mediaType), eq(mediaItems.externalId, externalId)),
@@ -55,15 +60,16 @@ export async function getUserListsWithMedia(
   return lists.map((l) => ({ ...l, listItemId: itemByList.get(l.id) ?? null }));
 }
 
+// Solo membresías aceptadas: una invitación pendiente no da acceso a la lista
 export async function getListMembership(listId: string, userId: string) {
   const [member] = await db
     .select()
     .from(listMembers)
     .where(
-      and(eq(listMembers.listId, listId), eq(listMembers.userId, userId))
+      and(eq(listMembers.listId, listId), eq(listMembers.userId, userId), acceptedMember)
     )
     .limit(1);
-  
+
   return member ?? null;
 }
 

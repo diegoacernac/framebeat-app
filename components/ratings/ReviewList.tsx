@@ -14,7 +14,7 @@ type Review = {
 
 export function ReviewList({ reviews }: { reviews: Review[] }) {
   if (reviews.length === 0) {
-    return <p className="text-sm text-muted-foreground">Aún no hay reseñas.</p>;
+    return <p className="text-sm text-muted-foreground">Aún no hay reseñas en tus listas.</p>;
   }
 
   return (

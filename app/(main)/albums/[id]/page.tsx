@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { eq, and } from "drizzle-orm";
+import { ratingVisibleTo } from "@/lib/visibility";
 import { notFound } from "next/navigation";
 import { formatTrackDuration, getAlbum, getAlbumCoverUrl } from "@/lib/spotify";
 import { db } from "@/lib/db";
@@ -57,7 +58,9 @@ export default async function AlbumPage({
       })
       .from(ratings)
       .innerJoin(profiles, eq(ratings.userId, profiles.userId))
-      .where(eq(ratings.mediaItemId, mediaItem.id));
+      // Privacidad: solo las tuyas y las de quienes comparten contigo una
+      // lista con este título (ver lib/visibility.ts)
+      .where(and(eq(ratings.mediaItemId, mediaItem.id), ratingVisibleTo(user?.id)));
 
     allReviews = dbRatings;
     if (user) {
@@ -150,10 +153,18 @@ export default async function AlbumPage({
         </p>
       )}
 
-      <section className="mt-10 space-y-4">
-        <h2 className="text-xl font-semibold">Reseñas</h2>
-        <ReviewList reviews={allReviews} />
-      </section>
+      {/* Sin sesión no hay reseñas que mostrar: son privadas */}
+      {user && (
+        <section className="mt-10 space-y-4">
+          <div className="space-y-1">
+            <h2 className="text-xl font-semibold">Reseñas</h2>
+            <p className="text-xs text-muted-foreground">
+              Solo ves tus reseñas y las de quienes comparten contigo una lista con este título.
+            </p>
+          </div>
+          <ReviewList reviews={allReviews} />
+        </section>
+      )}
     </main>
   );
 }

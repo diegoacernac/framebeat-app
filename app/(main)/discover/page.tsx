@@ -3,7 +3,6 @@ import { parseDiscoverParams, type DiscoverKind } from "@/lib/discover";
 import { DiscoverFilters } from "@/components/discover/DiscoverFilters";
 import { DiscoverResults } from "@/components/discover/DiscoverResults";
 import { createClient } from "@/lib/supabase/server";
-import { getPartnerUserIds } from "@/lib/lists";
 import { getSeenIds } from "@/lib/seen";
 
 type DiscoverFiltersInput = Omit<Parameters<typeof discoverMedia>[0], "page">;
@@ -20,16 +19,16 @@ async function discoverRandomPage(filters: DiscoverFiltersInput) {
   return { result, page };
 }
 
-// Lo que tú o tu pareja ya vieron (vacío si no hay sesión)
-async function getCoupleSeenIds(kind: DiscoverKind) {
+// Lo que tú ya viste (vacío si no hay sesión). Privacidad: antes incluía lo
+// de tu pareja aunque no estuviera en ninguna lista en común.
+async function getMySeenIds(kind: DiscoverKind) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return new Set<string>();
 
-  const partners = await getPartnerUserIds(user.id);
-  return getSeenIds([user.id, ...partners], kind);
+  return getSeenIds([user.id], kind);
 }
 
 export default async function DiscoverPage({
@@ -61,7 +60,7 @@ export default async function DiscoverPage({
   // Así la página nunca abre vacía.
   {
     startPage = Math.max(1, Number(params.page) || 1);
-    // TMDB y "qué ya vieron" en paralelo: no dependen uno del otro
+    // TMDB y "qué ya viste" en paralelo: no dependen uno del otro
     const [discovered, seen] = await Promise.all([
       shuffle
         ? discoverRandomPage(filters)
@@ -69,7 +68,7 @@ export default async function DiscoverPage({
             result: r,
             page: startPage,
           })),
-      getCoupleSeenIds(kind),
+      getMySeenIds(kind),
     ]);
     result = discovered.result;
     startPage = discovered.page;

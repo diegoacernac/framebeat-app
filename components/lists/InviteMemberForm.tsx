@@ -36,8 +36,10 @@ export function InviteMemberForm({ listId }: { listId: string }) {
       return;
     }
 
+    const invited = username.replace(/^@/, "").toLowerCase();
     setUsername("");
-    setSuccess("Usuario invitado");
+    // Queda pendiente hasta que acepte desde "Mis listas"
+    setSuccess(`Invitación enviada a @${invited}. Verá la lista cuando la acepte.`);
     router.refresh();
   }
 

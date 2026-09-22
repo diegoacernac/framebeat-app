@@ -13,6 +13,7 @@ import { PersonMovieSearch } from "@/components/media/PersonMovieSearch";
 import { getPopularMovies, getPopularTv, getPosterUrl } from "@/lib/tmdb";
 import { PosterWall } from "@/components/marketing/PosterWall";
 import { getMediaHref } from "@/lib/media";
+import { ratingVisibleTo } from "@/lib/visibility";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -43,6 +44,9 @@ export default async function HomePage() {
         .from(ratings)
         .innerJoin(mediaItems, eq(ratings.mediaItemId, mediaItems.id))
         .innerJoin(profiles, eq(ratings.userId, profiles.userId))
+        // Privacidad: las tuyas y las de títulos en listas que compartes
+        // con su autor (ver lib/visibility.ts). Antes era de toda la app.
+        .where(ratingVisibleTo(user.id))
         .orderBy(desc(ratings.createdAt))
         .limit(10),
     ]);
@@ -77,7 +81,10 @@ export default async function HomePage() {
 
         {recentReviews.length > 0 && (
           <section className="space-y-4 border-t pt-8">
-            <h2 className="text-lg font-semibold">Actividad reciente</h2>
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold">Actividad reciente</h2>
+              <p className="text-xs text-muted-foreground">Tuya y de quienes comparten listas contigo.</p>
+            </div>
             {/* En web, dos columnas: filas de ancho completo quedarían muy estiradas */}
             <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-x-10 lg:gap-y-4 lg:space-y-0">
               {recentReviews.map((r, i) => {

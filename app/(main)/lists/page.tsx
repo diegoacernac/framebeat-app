@@ -1,9 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { listItemProgress, listItems, listMembers, mediaItems, sharedLists } from "@/lib/db/schema";
+import { listItemProgress, listItems, listMembers, mediaItems, profiles, sharedLists } from "@/lib/db/schema";
+import { acceptedMember } from "@/lib/lists";
+import { InvitationCard } from "@/components/lists/InvitationCard";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 
@@ -24,7 +26,21 @@ export default async function ListsPage() {
     })
     .from(listMembers)
     .innerJoin(sharedLists, eq(listMembers.listId, sharedLists.id))
-    .where(eq(listMembers.userId, user.id));
+    .where(and(eq(listMembers.userId, user.id), acceptedMember));
+
+  // Invitaciones que aún no respondes: solo título, quién invitó y cuántos
+  // títulos tiene (el contenido se ve al aceptar)
+  const invitations = await db
+    .select({
+      id: sharedLists.id,
+      title: sharedLists.title,
+      invitedBy: profiles.username,
+      itemCount: sql<number>`(select count(*)::int from list_items li where li.list_id = ${sharedLists.id})`,
+    })
+    .from(listMembers)
+    .innerJoin(sharedLists, eq(listMembers.listId, sharedLists.id))
+    .leftJoin(profiles, eq(profiles.userId, sharedLists.ownerId))
+    .where(and(eq(listMembers.userId, user.id), eq(listMembers.status, "pending")));
 
   const listIds = lists.map((l) => l.id);
 
@@ -71,6 +87,25 @@ export default async function ListsPage() {
           <Link href="/lists/new">Nueva lista</Link>
         </Button>
       </div>
+
+      {invitations.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+            Invitaciones ({invitations.length})
+          </h2>
+          <ul className="space-y-3">
+            {invitations.map((inv) => (
+              <InvitationCard
+                key={inv.id}
+                listId={inv.id}
+                title={inv.title}
+                invitedBy={inv.invitedBy}
+                itemCount={inv.itemCount}
+              />
+            ))}
+          </ul>
+        </section>
+      )}
 
       {lists.length === 0 ? (
         <p className="text-sm text-muted-foreground">

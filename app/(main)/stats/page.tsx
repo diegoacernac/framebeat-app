@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { mediaItems, profiles, ratings } from "@/lib/db/schema";
 import { createClient } from "@/lib/supabase/server";
 import { getPartnerUserIds } from "@/lib/lists";
+import { ratingVisibleTo } from "@/lib/visibility";
 import { getMediaHref } from "@/lib/media";
 
 // metadata.year lo guardan los botones de calificar ("2014")
@@ -137,7 +138,15 @@ export default async function StatsPage() {
       .select(ratingFields)
       .from(ratings)
       .innerJoin(mediaItems, eq(ratings.mediaItemId, mediaItems.id))
-      .where(and(eq(ratings.userId, userId), inArray(mediaItems.type, ["movie", "tv"])))
+      // Privacidad: de tu pareja solo cuenta lo que calificó de títulos en
+      // listas que comparten (ver lib/visibility.ts). Lo tuyo cuenta todo.
+      .where(
+        and(
+          eq(ratings.userId, userId),
+          inArray(mediaItems.type, ["movie", "tv"]),
+          ratingVisibleTo(user!.id)
+        )
+      )
       .orderBy(desc(ratings.updatedAt));
   }
 
@@ -194,7 +203,12 @@ export default async function StatsPage() {
         <PersonStat label="Tú" name={myName} rs={myRatings} average={myAvg} />
 
         {partnerProfile ? (
-          <PersonStat label="Tu pareja" name={partnerName} rs={partnerRatings} average={partnerAvg} />
+          <PersonStat
+            label="Tu pareja · en listas compartidas"
+            name={partnerName}
+            rs={partnerRatings}
+            average={partnerAvg}
+          />
         ) : (
           // Sin pareja ocupa el resto de la fila (no queda un hueco a la derecha)
           <div className="flex flex-col items-center justify-center border p-5 text-center lg:col-span-2">

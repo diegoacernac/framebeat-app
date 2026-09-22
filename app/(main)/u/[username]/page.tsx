@@ -4,6 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProfileRatingsTabs } from "@/components/profile/ProfileRatingsTabs";
 import { db } from "@/lib/db";
 import { mediaItems, profiles, ratings } from "@/lib/db/schema";
+import { createClient } from "@/lib/supabase/server";
+import { ratingVisibleTo, sharesAnyList } from "@/lib/visibility";
 
 export default async function ProfilePage({
   params,
@@ -18,6 +20,18 @@ export default async function ProfilePage({
 
   if (!profile) notFound();
 
+  // Privacidad: tu perfil lo ves completo. El de otra persona solo existe si
+  // comparten al menos una lista, y aun así solo muestra lo que calificó de
+  // títulos que están en listas de los dos (ver lib/visibility.ts). Para el
+  // resto, y sin sesión, es "no encontrado": ni siquiera se sabe si existe.
+  const supabase = await createClient();
+  const {
+    data: { user: viewer },
+  } = await supabase.auth.getUser();
+  if (!viewer) notFound();
+  const isOwnProfile = viewer.id === profile.userId;
+  if (!isOwnProfile && !(await sharesAnyList(viewer.id, profile.userId))) notFound();
+
   const movieRatings = await db
     .select({
       stars: ratings.stars,
@@ -29,7 +43,7 @@ export default async function ProfilePage({
     .from(ratings)
     .innerJoin(mediaItems, eq(ratings.mediaItemId, mediaItems.id))
     .where(
-      and(eq(ratings.userId, profile.userId), eq(mediaItems.type, "movie"))
+      and(eq(ratings.userId, profile.userId), eq(mediaItems.type, "movie"), ratingVisibleTo(viewer.id))
     )
     .orderBy(desc(ratings.createdAt));
 
@@ -44,7 +58,7 @@ export default async function ProfilePage({
     .from(ratings)
     .innerJoin(mediaItems, eq(ratings.mediaItemId, mediaItems.id))
     .where(
-      and(eq(ratings.userId, profile.userId), eq(mediaItems.type, "album"))
+      and(eq(ratings.userId, profile.userId), eq(mediaItems.type, "album"), ratingVisibleTo(viewer.id))
     )
     .orderBy(desc(ratings.createdAt));
 
@@ -74,6 +88,12 @@ export default async function ProfilePage({
         </div>
       </div>
       {profile.bio && <p className="text-sm">{profile.bio}</p>}
+
+      {!isOwnProfile && (
+        <p className="border-l-2 border-amber-500/60 pl-3 text-xs text-muted-foreground">
+          Solo ves lo que calificó de títulos que están en listas que compartes con esta persona.
+        </p>
+      )}
 
       <ProfileRatingsTabs
         movieRatings={withYear(movieRatings)}

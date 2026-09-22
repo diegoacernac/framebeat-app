@@ -40,10 +40,12 @@ export default async function ListDetailPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Con la invitación pendiente todavía no se ve la lista
   const membership = await db.query.listMembers.findFirst({
     where: and(
       eq(listMembers.listId, listId),
-      eq(listMembers.userId, user.id)
+      eq(listMembers.userId, user.id),
+      eq(listMembers.status, "accepted")
     ),
   });
   if (!membership) notFound();
@@ -57,6 +59,7 @@ export default async function ListDetailPage({
     .select({
       userId: listMembers.userId,
       role: listMembers.role,
+      status: listMembers.status,
       username: profiles.username,
       avatarUrl: profiles.avatarUrl,
     })
@@ -88,7 +91,8 @@ export default async function ListDetailPage({
         .sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999))
     );
 
-  const memberUserIds = members.map((m) => m.userId);
+  // Privacidad: solo se muestran calificaciones de quienes ya aceptaron
+  const memberUserIds = members.filter((m) => m.status === "accepted").map((m) => m.userId);
   const mediaItemIds = items.map((i) => i.mediaItemId);
 
   const allRatings = mediaItemIds.length && memberUserIds.length
@@ -289,11 +293,19 @@ export default async function ListDetailPage({
                 {m.avatarUrl && <AvatarImage src={m.avatarUrl} alt={m.username} />}
                 <AvatarFallback>{m.username.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
-              <Link href={`/u/${m.username}`} className="hover:underline">
-                @{m.username}
-              </Link>
+              {/* Pendiente: aún no comparten la lista, su perfil no es visible */}
+              {m.status === "accepted" ? (
+                <Link href={`/u/${m.username}`} className="hover:underline">
+                  @{m.username}
+                </Link>
+              ) : (
+                <span className="text-muted-foreground">@{m.username}</span>
+              )}
               {m.role === "owner" && (
-                <span className="text-xs text-muted-foreground">(owner)</span>
+                <span className="text-xs text-muted-foreground">(dueño)</span>
+              )}
+              {m.status === "pending" && (
+                <span className="text-xs text-amber-500/80">invitación pendiente</span>
               )}
             </li>
           ))}

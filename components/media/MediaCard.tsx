@@ -10,7 +10,7 @@ type Props = {
   index?: number;
   aspectRatio?: "poster" | "square";
   showStars?: number;
-  // Marca "✓ Vista" (en ¿Qué vemos?: alguno de los dos ya la vio)
+  // Marca "✓ Vista" (en ¿Qué vemos?: ya la viste)
   seen?: boolean;
   // Nota TMDB (0-10): "★ 7.8" junto al año
   rating?: number;

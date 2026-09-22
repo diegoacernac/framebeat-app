@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "../../../lib/db";
 import { listMembers, sharedLists } from "../../../lib/db/schema";
 import { createClient } from "../../../lib/supabase/server";
 import { createListSchema } from "../../../lib/validations/list";
-import { title } from "process";
-import { error } from "console";
+import { acceptedMember } from "../../../lib/lists";
 
 export async function GET() {
   const supabase = await createClient();
@@ -26,7 +25,7 @@ export async function GET() {
     })
     .from(listMembers)
     .innerJoin(sharedLists, eq(listMembers.listId, sharedLists.id))
-    .where(eq(listMembers.userId, user.id));
+    .where(and(eq(listMembers.userId, user.id), acceptedMember));
 
     return NextResponse.json({ lists });
 }

@@ -5,7 +5,6 @@ import { listMembers, profiles } from "../../../../../lib/db/schema";
 import { createClient } from "../../../../../lib/supabase/server";
 import { inviteMemberSchema } from "../../../../../lib/validations/list";
 import { requireListMember } from "../../../../../lib/lists";
-import { error } from "console";
 
 export async function POST(
   request: Request,
@@ -38,6 +37,9 @@ export async function POST(
   });
 
   if (!invited) {
+    return NextResponse.json({ error: "No existe ese usuario" }, { status: 404 });
+  }
+  if (invited.userId === user.id) {
     return NextResponse.json({ error: "No puedes invitarte a ti mismo" }, { status: 400 });
   }
 
@@ -49,13 +51,24 @@ export async function POST(
   });
 
   if (existing) {
-    return NextResponse.json({ error: "Ya está en la lista" }, { status: 409 });
+    return NextResponse.json(
+      {
+        error:
+          existing.status === "pending"
+            ? "Ya tiene una invitación pendiente"
+            : "Ya está en la lista",
+      },
+      { status: 409 }
+    );
   }
 
+  // Queda pendiente: no ve la lista (ni se hacen visibles sus calificaciones)
+  // hasta que acepte desde "Mis listas"
   await db.insert(listMembers).values({
     listId,
     userId: invited.userId,
     role: "member",
+    status: "pending",
   });
 
   return NextResponse.json(

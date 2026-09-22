@@ -5,6 +5,7 @@ import { DetailHero } from "@/components/media/DetailHero";
 import { ExpandableText } from "@/components/ui/expandable-text";
 import { RateShortcut } from "@/components/ratings/RateShortcut";
 import { eq, and, inArray, like } from "drizzle-orm";
+import { ratingVisibleTo } from "@/lib/visibility";
 import { notFound } from "next/navigation";
 import {
   getTv,
@@ -73,7 +74,9 @@ export default async function SeriesPage({
         })
         .from(ratings)
         .innerJoin(profiles, eq(ratings.userId, profiles.userId))
-        .where(inArray(ratings.mediaItemId, seasonMediaItemIds))
+        // Privacidad: solo las tuyas y las de quienes comparten contigo una
+        // lista con esta serie (ver lib/visibility.ts)
+        .where(and(inArray(ratings.mediaItemId, seasonMediaItemIds), ratingVisibleTo(user?.id)))
     : [];
 
   const realSeasons = tv.seasons.filter((s) => s.season_number > 0);

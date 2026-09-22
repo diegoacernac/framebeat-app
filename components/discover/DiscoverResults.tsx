@@ -17,7 +17,7 @@ type Props = {
   // Filtros actuales como query string (sin page/shuffle), para pedir más páginas
   filterQuery: string;
   shuffled: boolean;
-  // IDs TMDB que alguno de los dos ya vio (calificó o marcó como vista)
+  // IDs TMDB que ya viste (calificaste o marcaste como vista)
   seenIds: string[];
   kind: "movie" | "tv";
   // Sin filtros: se muestra lo más popular en Perú, con su propio título
@@ -133,14 +133,14 @@ export function DiscoverResults({
                 : "border-foreground/25 text-foreground/80 hover:border-foreground/70 hover:text-foreground"
             )}
           >
-            {hideSeen ? "✓ " : ""}Ocultar las que ya vieron ({seenCount})
+            {hideSeen ? "✓ " : ""}Ocultar las que ya viste ({seenCount})
           </button>
         )}
       </div>
 
       {visible.length === 0 ? (
         <p className="text-sm text-muted-foreground animate-in fade-in duration-300">
-          Ya vieron todas las de esta tanda.
+          Ya viste todas las de esta tanda.
           {hasMore ? " Prueba con «Ver más»." : ""}
         </p>
       ) : (
