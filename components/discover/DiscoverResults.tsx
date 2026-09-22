@@ -142,6 +142,7 @@ export function DiscoverResults({
               key={movie.id}
               // La animación escalonada solo para la tanda nueva, no para las 40 anteriores
               index={i % 20}
+              eager={i < 4}
               href={`${kind === "tv" ? "/series" : "/movies"}/${movie.id}`}
               title={movie.title}
               subtitle={movie.release_date?.slice(0, 4)}

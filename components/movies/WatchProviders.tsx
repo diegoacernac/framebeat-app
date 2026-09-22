@@ -45,7 +45,8 @@ function ProviderList({
               {logo && (
                 <Image
                   src={logo}
-                  alt={p.provider_name}
+                  // El nombre ya va al lado en texto: el logo es decorativo
+                  alt=""
                   width={20}
                   height={20}
                   className="rounded-sm"

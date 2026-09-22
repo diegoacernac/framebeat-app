@@ -22,7 +22,7 @@ export function ReviewList({ reviews }: { reviews: Review[] }) {
       {reviews.map((r) => (
         <article key={r.id} className="flex gap-3 border-b pb-4">
           <Avatar>
-            {r.avatarUrl && <AvatarImage src={r.avatarUrl} />}
+            {r.avatarUrl && <AvatarImage src={r.avatarUrl} alt={`@${r.username}`} />}
             <AvatarFallback>{r.username.slice(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
           <div className="space-y-1">

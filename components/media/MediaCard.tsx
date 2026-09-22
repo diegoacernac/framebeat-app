@@ -17,6 +17,9 @@ type Props = {
   // Con sinopsis, al pasar el mouse se muestra el título completo, año, nota
   // y sinopsis sobre el poster (mismo formato que las sugerencias de listas)
   overview?: string;
+  // Primera fila visible: carga inmediata y prioritaria (es el LCP de la
+  // página). El resto sigue en lazy.
+  eager?: boolean;
 };
 
 export function MediaCard({
@@ -30,6 +33,7 @@ export function MediaCard({
   seen = false,
   rating,
   overview,
+  eager = false,
 }: Props) {
   const hasRating = rating !== undefined && rating > 0;
 
@@ -38,7 +42,9 @@ export function MediaCard({
       href={href}
       className={cn(
         "group block space-y-2",
-        "animate-in fade-in slide-in-from-bottom-2 fill-mode-both duration-300"
+        // La primera fila (eager) aparece sin animación: arrancar en opacidad 0
+        // retrasa el LCP. El resto entra escalonado.
+        !eager && "animate-in fade-in slide-in-from-bottom-2 fill-mode-both duration-300"
       )}
       style={{ animationDelay: `${index * 40}ms` }}
     >
@@ -57,6 +63,11 @@ export function MediaCard({
             src={posterUrl}
             alt={title}
             fill
+            loading={eager ? "eager" : "lazy"}
+            // Prioridad alta solo para las 2 primeras (la fila visible en
+            // móvil): con más, en redes lentas compiten con el CSS y retrasan
+            // el primer pintado
+            fetchPriority={eager && index < 2 ? "high" : "auto"}
             className={cn(
               "object-cover transition-[transform,opacity] duration-300 group-hover:scale-105",
               // Atenuada, pero vuelve a opacidad completa al pasar el mouse

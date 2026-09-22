@@ -55,6 +55,7 @@ export function MediaSearch({ initialResults = [], kind = "movie" }: Props) {
             <MediaCard
               key={movie.id}
               index={i}
+              eager={i < 4}
               href={`${hrefBase}/${movie.id}`}
               title={movie.title}
               subtitle={movie.release_date?.slice(0, 4)}

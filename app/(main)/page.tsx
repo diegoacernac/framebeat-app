@@ -55,7 +55,7 @@ export default async function HomePage() {
     }));
 
     return (
-      <main className="mx-auto w-full max-w-4xl lg:max-w-6xl flex-1 space-y-10 p-4 sm:p-8 animate-in fade-in duration-500">
+      <main className="mx-auto w-full max-w-4xl lg:max-w-6xl flex-1 space-y-10 p-4 sm:p-8">
         <Tabs defaultValue="title">
           <TabsList>
             <TabsTrigger value="title">Por título</TabsTrigger>
@@ -103,7 +103,9 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-12 p-4 sm:p-8 text-center animate-in fade-in duration-500">
+    // Sin fade-in: el título es el LCP de la portada y partir de opacidad 0
+    // retrasa cuándo el navegador lo da por pintado
+    <main className="flex flex-1 flex-col items-center justify-center gap-12 p-4 sm:p-8 text-center">
       <div className="space-y-4 max-w-lg">
         <h1 className="text-5xl font-semibold tracking-tight">FrameBeat</h1>
         <p className="text-lg text-muted-foreground">

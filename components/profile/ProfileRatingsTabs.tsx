@@ -31,6 +31,7 @@ function RatingsGrid({
         <MediaCard
           key={rating.externalId}
           index={i}
+          eager={i < 4}
           aspectRatio={aspectRatio}
           href={`${hrefPrefix}/${rating.externalId}`}
           title={rating.title}

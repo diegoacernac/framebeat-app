@@ -103,7 +103,9 @@ export default async function MoviePage({
             fill
             className="object-cover object-top"
             sizes="100vw"
-            priority
+            // Es el LCP: se pide primero (priority está deprecado en Next 16)
+            loading="eager"
+            fetchPriority="high"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
         </div>
