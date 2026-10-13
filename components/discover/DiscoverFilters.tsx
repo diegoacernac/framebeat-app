@@ -9,6 +9,7 @@ import { PeopleSearch, type Person } from "./PeopleSearch";
 import { MOODS, type DiscoverKind } from "@/lib/discover";
 import { SectionLabel } from "@/components/ui/section-label";
 import { chipClass } from "@/components/ui/chip";
+import { segmentedGroupClass, segmentedItemClass } from "@/components/ui/segmented";
 
 // IDs de TMDB para Perú (son los mismos para películas y series)
 const PLATFORMS = [
@@ -151,7 +152,7 @@ export function DiscoverFilters({
       {/* Películas / Series + abrir/plegar filtros */}
       <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-3">
-        <div className="inline-flex border" role="group" aria-label="Tipo">
+        <div className={segmentedGroupClass} role="group" aria-label="Tipo">
           {KINDS.map((k) => {
             const KindIcon = k.icon;
             const active = kind === k.id;
@@ -161,12 +162,7 @@ export function DiscoverFilters({
                 type="button"
                 onClick={() => changeKind(k.id)}
                 aria-pressed={active}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 text-sm transition-colors",
-                  active
-                    ? "bg-primary font-medium text-primary-foreground"
-                    : "text-foreground/80 hover:text-foreground"
-                )}
+                className={segmentedItemClass(active)}
               >
                 <KindIcon size={16} weight={active ? "fill" : "regular"} />
                 {k.label}

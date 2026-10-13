@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { FilmSlateIcon, TelevisionSimpleIcon } from "@phosphor-icons/react/dist/ssr";
-import { cn } from "@/lib/utils";
 import { SectionLabel } from "../ui/section-label";
 import { ListAddMovieSearch } from "./ListAddMovieSearch";
+import { segmentedGroupClass, segmentedItemClass } from "@/components/ui/segmented";
 
 // "Añadir a la lista": un solo buscador con selector Películas / Series
 // (antes eran dos bloques iguales, uno debajo del otro)
@@ -15,7 +15,7 @@ export function ListAddPanel({ listId, existingKeys }: { listId: string; existin
     <div className="space-y-4 border bg-card p-4">
       <div className="flex items-center justify-between gap-3">
         <SectionLabel as="h2">Añadir</SectionLabel>
-        <div role="group" aria-label="Tipo" className="inline-flex border">
+        <div role="group" aria-label="Tipo" className={segmentedGroupClass}>
           {(
             [
               { id: "movie", label: "Películas", icon: FilmSlateIcon },
@@ -30,10 +30,7 @@ export function ListAddPanel({ listId, existingKeys }: { listId: string; existin
                 type="button"
                 onClick={() => setKind(k.id)}
                 aria-pressed={active}
-                className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1 text-xs transition-colors",
-                  active ? "bg-primary font-medium text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                )}
+                className={segmentedItemClass(active, "sm")}
               >
                 <Icon size={13} weight={active ? "fill" : "regular"} />
                 {k.label}

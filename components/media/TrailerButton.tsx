@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { PlayIcon, XIcon } from "@phosphor-icons/react/dist/ssr";
 import type { Trailer } from "@/lib/tmdb";
+import { segmentedGroupClass, segmentedItemClass } from "@/components/ui/segmented";
 
 // "▶ Ver tráiler" y un reproductor en ventana sobre la página.
 // - <dialog> nativo: Escape cierra, el foco queda dentro y va por encima de
@@ -59,18 +60,14 @@ export function TrailerButton({ trailer, title }: { trailer: Trailer; title: str
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
               {trailer.versions.length > 1 && (
-                <div role="group" aria-label="Versión del tráiler" className="inline-flex border border-white/20">
+                <div role="group" aria-label="Versión del tráiler" className={`${segmentedGroupClass} border-white/20`}>
                   {trailer.versions.map((v, i) => (
                     <button
                       key={v.id}
                       type="button"
                       onClick={() => setVersionIndex(i)}
                       aria-pressed={i === versionIndex}
-                      className={
-                        i === versionIndex
-                          ? "bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground"
-                          : "px-2.5 py-1 text-xs text-white/70 transition-colors hover:text-white"
-                      }
+                      className={segmentedItemClass(i === versionIndex, "sm")}
                     >
                       {v.label}
                     </button>

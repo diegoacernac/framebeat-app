@@ -12,6 +12,7 @@ import { MediaSearch } from "@/components/media/MediaSearch";
 import { PersonMovieSearch } from "@/components/media/PersonMovieSearch";
 import { getPopularMovies, getPopularTv, getPosterUrl } from "@/lib/tmdb";
 import { PosterWall } from "@/components/marketing/PosterWall";
+import { FilmSlateIcon, TelevisionSimpleIcon, UserCircleIcon } from "@phosphor-icons/react/dist/ssr";
 import { getMediaHref } from "@/lib/media";
 import { ratingVisibleTo } from "@/lib/visibility";
 
@@ -64,9 +65,16 @@ export default async function HomePage() {
       <main className="mx-auto w-full max-w-4xl lg:max-w-6xl flex-1 space-y-10 p-4 sm:p-8">
         <Tabs defaultValue="title">
           <TabsList>
-            <TabsTrigger value="title">Por título</TabsTrigger>
-            <TabsTrigger value="series">Series</TabsTrigger>
-            <TabsTrigger value="person">Por actor o director</TabsTrigger>
+            <TabsTrigger value="title">
+              <FilmSlateIcon /> Películas
+            </TabsTrigger>
+            <TabsTrigger value="series">
+              <TelevisionSimpleIcon /> Series
+            </TabsTrigger>
+            <TabsTrigger value="person">
+              <UserCircleIcon /> <span className="sm:hidden">Personas</span>
+              <span className="hidden sm:inline">Actor o director</span>
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="title" className="mt-6">
             <MediaSearch initialResults={popular} />
