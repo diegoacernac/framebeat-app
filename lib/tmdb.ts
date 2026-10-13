@@ -113,6 +113,73 @@ export async function searchMovies(query: string) {
   return data.results;
 }
 
+// Búsqueda (sin tildes, minúsculas) → estudio principal de la marca
+const STUDIO_ALIASES: Record<string, { id: number; name: string }> = {
+  disney: { id: 2, name: "Walt Disney Pictures" },
+  "walt disney": { id: 2, name: "Walt Disney Pictures" },
+  warner: { id: 174, name: "Warner Bros. Pictures" },
+  "warner bros": { id: 174, name: "Warner Bros. Pictures" },
+  universal: { id: 33, name: "Universal Pictures" },
+  paramount: { id: 4, name: "Paramount Pictures" },
+  dreamworks: { id: 521, name: "DreamWorks Animation" },
+  "20th century": { id: 25, name: "20th Century Fox" },
+  fox: { id: 25, name: "20th Century Fox" },
+  columbia: { id: 5, name: "Columbia Pictures" },
+  sony: { id: 34, name: "Sony Pictures" },
+  illumination: { id: 6704, name: "Illumination" },
+};
+
+export type Studio = {
+  id: number;
+  name: string;
+  total: number;
+  results: TmdbMovieSearchResult[];
+};
+
+const normalizeName = (text: string) =>
+  text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+// ¿Lo que se buscó es un estudio? "marvel" → Marvel Studios, "pixar" →
+// Pixar, "ghibli" → Studio Ghibli. search/movie solo mira títulos, por eso
+// "marvel" no traía Avengers ni Iron Man.
+// - Candidatos: compañías cuyo nombre contiene la búsqueda como palabra
+//   completa (con 2-3 letras, como "dc", solo si el nombre es exactamente ese).
+// - Entre los candidatos gana el que tiene más películas: "a24" devuelve dos
+//   compañías con el mismo nombre y la primera no es la buena.
+// - Hacen falta al menos 5 películas, para no mostrar productoras perdidas.
+export async function findStudio(query: string): Promise<Studio | null> {
+  const q = normalizeName(query);
+  if (q.length < 2) return null;
+
+  // Marcas grandes: la búsqueda de TMDB las entierra entre decenas de
+  // filiales ("disney" devuelve 80 compañías y Walt Disney Pictures ni sale
+  // entre las primeras 20). Para esas, el estudio principal va directo.
+  const alias = STUDIO_ALIASES[q];
+  const candidates = alias
+    ? [alias]
+    : (await tmdbFetch<{ results: { id: number; name: string }[] }>("/search/company", { query })).results
+        .filter((c) => {
+          const name = normalizeName(c.name);
+          return q.length <= 3 ? name === q : ` ${name} `.includes(` ${q} `);
+        })
+        .slice(0, 3);
+  if (candidates.length === 0) return null;
+
+  const withMovies = await Promise.all(
+    candidates.map(async (c) => {
+      const movies = await tmdbFetch<TmdbSearchResponse & { total_results: number }>("/discover/movie", {
+        with_companies: String(c.id),
+        sort_by: "popularity.desc",
+        "vote_count.gte": "20",
+      });
+      return { id: c.id, name: c.name, total: movies.total_results, results: movies.results };
+    })
+  );
+
+  const best = withMovies.sort((a, b) => b.total - a.total)[0];
+  return best && best.total >= 5 ? best : null;
+}
+
 export async function getMovie(id: number) {
   return tmdbFetch<TmdbMovieDetail>(`/movie/${id}`);
 }

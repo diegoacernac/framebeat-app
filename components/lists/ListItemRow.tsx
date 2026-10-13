@@ -112,7 +112,7 @@ export function ListItemRow({
     <article
       className={cn(
         // Fila tipo playlist: una línea, acciones redondas a la derecha
-        "group/row flex items-center gap-3 border-b px-2 py-2.5 transition-[background-color] duration-200 hover:bg-card sm:gap-4",
+        "group/row flex items-center gap-3 border-b px-1 py-2.5 transition-[background-color] duration-200 hover:bg-card sm:gap-4 sm:px-2",
         // Entrada: al añadir un ítem, solo la fila nueva se monta y se anima
         "animate-in fade-in slide-in-from-top-2 duration-300",
         removing && "pointer-events-none opacity-40"
@@ -120,7 +120,8 @@ export function ListItemRow({
       aria-busy={removing}
     >
       {index !== undefined && (
-        <span className="w-5 shrink-0 text-right text-sm tabular-nums text-muted-foreground">
+        // En móvil sin número (como Spotify): el espacio es para el título
+        <span className="hidden w-5 shrink-0 text-right text-sm tabular-nums text-muted-foreground sm:block">
           {index}
         </span>
       )}
@@ -130,7 +131,7 @@ export function ListItemRow({
         href={href}
         className={cn(
           "group relative shrink-0 overflow-hidden bg-muted transition-opacity",
-          isPortrait ? "w-11 aspect-[2/3] lg:w-12" : "size-11 lg:size-12",
+          isPortrait ? "w-10 aspect-[2/3] sm:w-11 lg:w-12" : "size-10 sm:size-11 lg:size-12",
           optimisticCompleted && "opacity-45"
         )}
       >
@@ -148,14 +149,15 @@ export function ListItemRow({
       </Link>
 
       <div className={cn("min-w-0 flex-1 space-y-1 transition-opacity", optimisticCompleted && "opacity-55")}>
-        <Link href={href} className="block truncate font-medium leading-snug hover:underline">
+        {/* En móvil hasta 2 líneas (cortar en "Kill Bill: …" no dejaba saber cuál era) */}
+        <Link href={href} className="line-clamp-2 font-medium leading-snug hover:underline sm:line-clamp-1">
           {title}
           {year && <span className="ml-2 text-sm font-normal tabular-nums text-muted-foreground">{year}</span>}
         </Link>
 
         {/* Notas de los miembros (sin calificaciones no se muestra nada) */}
         {memberRatings.length > 0 && (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 sm:gap-x-4">
             {memberRatings.map((r) => (
               <span key={r.userId} className="flex items-center gap-1.5">
                 <Link href={`/u/${r.username}`} className="text-xs text-muted-foreground hover:text-foreground hover:underline">
@@ -183,7 +185,7 @@ export function ListItemRow({
       )}
 
       {/* Acciones redondas, en la línea del botón "Elegir al azar" */}
-      <div className="flex shrink-0 items-center gap-1.5">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-1.5">
         <button
           type="button"
           onClick={toggleCompleted}
@@ -191,21 +193,21 @@ export function ListItemRow({
           aria-label={optimisticCompleted ? `Desmarcar "${title}" como vista` : `Marcar "${title}" como vista`}
           title={optimisticCompleted ? "Vista · tocar para desmarcar" : "Marcar como vista"}
           className={cn(
-            "flex size-9 items-center justify-center rounded-full border transition-all duration-200 active:scale-90",
+            "flex size-8 items-center justify-center rounded-full border transition-all duration-200 active:scale-90 sm:size-9",
             optimisticCompleted
               ? "border-primary bg-primary text-primary-foreground"
               : "border-foreground/20 text-muted-foreground hover:border-foreground/60 hover:text-foreground"
           )}
         >
           {/* key distinta → se re-monta y el ✓ hace un pequeño "pop" */}
-          <CheckIcon key={String(optimisticCompleted)} size={16} weight="bold" className="animate-in zoom-in-50 duration-200" />
+          <CheckIcon key={String(optimisticCompleted)} size={15} weight="bold" className="animate-in zoom-in-50 duration-200" />
         </button>
 
         {myRating ? (
           <Link
             href={rateHref}
             title="Tu nota · tocar para cambiarla"
-            className="flex h-9 items-center gap-1 rounded-full border border-primary/40 px-3 text-xs font-medium tabular-nums text-primary transition-colors hover:border-primary"
+            className="flex h-8 items-center gap-1 rounded-full border border-primary/40 px-2.5 text-xs font-medium tabular-nums text-primary transition-colors hover:border-primary sm:h-9 sm:px-3"
           >
             ★ {myRating.stars}
           </Link>
@@ -214,9 +216,9 @@ export function ListItemRow({
             href={rateHref}
             aria-label={`Calificar "${title}"`}
             title="Calificar"
-            className="flex size-9 items-center justify-center rounded-full border border-foreground/20 text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+            className="flex size-8 items-center justify-center rounded-full border border-foreground/20 text-muted-foreground transition-colors hover:border-primary hover:text-primary sm:size-9"
           >
-            <StarIcon size={16} />
+            <StarIcon size={15} />
           </Link>
         )}
 
@@ -227,9 +229,9 @@ export function ListItemRow({
           disabled={removing}
           aria-label={`Quitar "${title}" de la lista`}
           title="Quitar de la lista"
-          className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-[color,opacity] hover:text-destructive focus-visible:opacity-100 lg:opacity-0 lg:group-hover/row:opacity-100"
+          className="-mr-1 flex size-8 items-center justify-center rounded-full text-muted-foreground transition-[color,opacity] hover:text-destructive focus-visible:opacity-100 sm:mr-0 sm:size-9 lg:opacity-0 lg:group-hover/row:opacity-100"
         >
-          {removing || collapsing ? <Spinner size={14} /> : <TrashIcon size={16} />}
+          {removing || collapsing ? <Spinner size={14} /> : <TrashIcon size={15} />}
         </button>
       </div>
     </article>

@@ -101,7 +101,12 @@ export function BottomNav({ username }: { username: string }) {
     <nav
       data-bottom-nav
       aria-label="Navegación principal"
-      className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+      // after: una franja del mismo fondo que se extiende hacia abajo. En
+      // Safari de iOS 26 (Liquid Glass) la barra de direcciones flota y la
+      // página sigue visible por debajo de nuestro menú; sin esto se ve el
+      // contenido pasando entre el menú y la barra de Safari, como si el
+      // menú estuviera roto. Fuera de la pantalla no se ve ni molesta.
+      className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-40 after:bg-background md:hidden"
     >
       <ul className="grid grid-cols-5">
         {getNavItems(username).map((item) => {

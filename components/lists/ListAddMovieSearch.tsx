@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { XIcon } from "@phosphor-icons/react/dist/ssr";
+import { BuildingsIcon, XIcon } from "@phosphor-icons/react/dist/ssr";
+import { SectionLabel } from "../ui/section-label";
 import { useDebouncedFetch } from "@/hooks/useDebouncedFetch";
 import { useAddToList } from "@/hooks/useAddToList";
 import { Input } from "../ui/input";
@@ -32,10 +33,56 @@ export function ListAddMovieSearch({ listId, kind = "movie", existingKeys }: Pro
 
   const searchUrl = kind === "tv" ? "/api/series/search" : "/api/movies/search";
   const trimmed = query.trim();
-  const { data, loading, error } = useDebouncedFetch<{ results?: MovieResult[] }>(
-    trimmed ? `${searchUrl}?q=${encodeURIComponent(trimmed)}` : null
-  );
-  const results = data?.results ?? [];
+  const { data, loading, error } = useDebouncedFetch<{
+    results?: MovieResult[];
+    studio?: { id: number; name: string; total: number; results: MovieResult[] } | null;
+  }>(trimmed ? `${searchUrl}?q=${encodeURIComponent(trimmed)}` : null);
+  // "marvel" → primero las de Marvel Studios (ideal para armar una lista de
+  // la saga de una vez), después los resultados por título sin repetir
+  const studio = data?.studio ?? null;
+  const studioIds = new Set(studio?.results.map((m) => m.id));
+  const results = (data?.results ?? []).filter((m) => !studioIds.has(m.id));
+
+  const renderRow = (movie: MovieResult, i: number) => {
+    const inList = isInList(kind, movie.id);
+    const poster = getPosterUrl(movie.poster_path, "w92");
+    return (
+      <li
+        key={movie.id}
+        className={cn(
+          "flex items-center gap-3 border bg-card p-2 text-sm transition-colors",
+          "animate-in fade-in slide-in-from-top-1 fill-mode-both duration-200",
+          inList && "border-primary/40 bg-primary/5"
+        )}
+        style={{ animationDelay: `${i * 30}ms` }}
+      >
+        {/* Poster chico: ayuda a distinguir entre títulos casi iguales */}
+        <div className="relative aspect-[2/3] w-9 shrink-0 overflow-hidden bg-muted">
+          {poster && <Image src={poster} alt="" fill sizes="36px" className="object-cover" />}
+        </div>
+        <span className="min-w-0 flex-1">
+          {movie.title}{" "}
+          <span className="text-muted-foreground">
+            ({movie.release_date?.slice(0, 4) || "s/f"})
+          </span>
+        </span>
+        <AddMediaButton
+          inList={inList}
+          adding={isAdding(kind, movie.id)}
+          onAdd={() =>
+            add({
+              id: movie.id,
+              type: kind,
+              title: movie.title,
+              year: movie.release_date?.slice(0, 4) || null,
+              posterPath: movie.poster_path,
+              overview: movie.overview,
+            })
+          }
+        />
+      </li>
+    );
+  };
 
   return (
     <div className="space-y-3">
@@ -71,48 +118,20 @@ export function ListAddMovieSearch({ listId, kind = "movie", existingKeys }: Pro
 
       <AddFeedback feedback={feedback} />
 
-      <ul className="space-y-2">
-        {results.map((movie, i) => {
-          const inList = isInList(kind, movie.id);
-          const poster = getPosterUrl(movie.poster_path, "w92");
-          return (
-            <li
-              key={movie.id}
-              className={cn(
-                "flex items-center gap-3 border bg-card p-2 text-sm transition-colors",
-                "animate-in fade-in slide-in-from-top-1 fill-mode-both duration-200",
-                inList && "border-primary/40 bg-primary/5"
-              )}
-              style={{ animationDelay: `${i * 30}ms` }}
-            >
-              {/* Poster chico: ayuda a distinguir entre títulos casi iguales */}
-              <div className="relative aspect-[2/3] w-9 shrink-0 overflow-hidden bg-muted">
-                {poster && <Image src={poster} alt="" fill sizes="36px" className="object-cover" />}
-              </div>
-              <span className="min-w-0 flex-1">
-                {movie.title}{" "}
-                <span className="text-muted-foreground">
-                  ({movie.release_date?.slice(0, 4) || "s/f"})
-                </span>
-              </span>
-              <AddMediaButton
-                inList={inList}
-                adding={isAdding(kind, movie.id)}
-                onAdd={() =>
-                  add({
-                    id: movie.id,
-                    type: kind,
-                    title: movie.title,
-                    year: movie.release_date?.slice(0, 4) || null,
-                    posterPath: movie.poster_path,
-                    overview: movie.overview,
-                  })
-                }
-              />
-            </li>
-          );
-        })}
-      </ul>
+      {studio && (
+        <section className="space-y-2 animate-in fade-in duration-300">
+          <p className="flex items-center gap-1.5 text-sm">
+            <BuildingsIcon size={14} className="text-primary" />
+            <span className="font-medium">{studio.name}</span>
+            <span className="text-muted-foreground">· {studio.total} películas</span>
+          </p>
+          <ul className="space-y-2">{studio.results.map(renderRow)}</ul>
+        </section>
+      )}
+
+      {studio && results.length > 0 && <SectionLabel as="p" className="pt-2">Por título</SectionLabel>}
+
+      <ul className="space-y-2">{results.map(renderRow)}</ul>
     </div>
   );
 }

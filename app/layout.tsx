@@ -26,6 +26,10 @@ export const metadata: Metadata = {
 // inferior respeta la zona del gesto de inicio.
 export const viewport: Viewport = {
   viewportFit: "cover",
+  // Color de fondo de la app (el mismo --background de globals.css): Safari y
+  // Chrome en móvil tiñen su interfaz con él, así sus barras no contrastan
+  themeColor: "#0b0a08",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({
