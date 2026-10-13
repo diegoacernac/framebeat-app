@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { getPosterUrl, type TmdbMovieSearchResult } from "@/lib/tmdb";
 import { cn } from "@/lib/utils";
+import { chipClass } from "@/components/ui/chip";
 
 type Props = {
   initialMovies: TmdbMovieSearchResult[];
@@ -98,7 +99,7 @@ export function DiscoverResults({
         <div className="flex items-center gap-3">
           <p className="text-xs text-muted-foreground">
             {popular && !shuffled && (
-              <span className="mr-2 font-medium uppercase tracking-wider text-foreground">
+              <span className="mr-2 font-medium uppercase tracking-[0.12em] text-foreground">
                 Populares ahora en Perú
               </span>
             )}
@@ -126,12 +127,7 @@ export function DiscoverResults({
             type="button"
             onClick={() => setHideSeen((h) => !h)}
             aria-pressed={hideSeen}
-            className={cn(
-              "border px-2.5 py-1 text-xs transition-colors",
-              hideSeen
-                ? "border-amber-500 bg-amber-500 font-medium text-black"
-                : "border-foreground/25 text-foreground/80 hover:border-foreground/70 hover:text-foreground"
-            )}
+            className={chipClass(hideSeen, "sm")}
           >
             {hideSeen ? "✓ " : ""}Ocultar las que ya viste ({seenCount})
           </button>

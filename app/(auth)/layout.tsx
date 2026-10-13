@@ -20,10 +20,10 @@ export default async function AuthLayout({
       <aside className="relative isolate hidden overflow-hidden border-r lg:flex lg:flex-col lg:justify-end lg:p-12">
         <PosterWall posters={posters} className="-z-10" gridClassName="grid-cols-4" />
         <div className="max-w-md space-y-3">
-          <Link href="/" className="block text-3xl font-semibold tracking-tight hover:text-amber-500">
+          <Link href="/" className="block text-3xl font-semibold tracking-tight hover:text-primary">
             FrameBeat
           </Link>
-          <p className="text-muted-foreground">
+          <p className="font-sans text-muted-foreground">
             Decidan qué ver juntos, guarden lo pendiente en listas compartidas y califiquen lo que vieron.
           </p>
         </div>

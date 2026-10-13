@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ShuffleIcon } from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { SectionLabel } from "@/components/ui/section-label";
 
 type Candidate = {
   listItemId: string;
@@ -17,7 +18,17 @@ type Candidate = {
 const SPIN_MS = 900; // duración total del "giro"
 const TICK_MS = 70; // cada cuánto cambia el título mientras gira
 
-export function RandomPickButton({ candidates }: { candidates: Candidate[] }) {
+// Barra de acciones de la lista (estilo Spotify): el botón principal redondo
+// es "Elegir al azar"; las demás acciones (children) van a su lado. El
+// resultado ("Hoy toca…") aparece debajo de la barra.
+export function RandomPickButton({
+  candidates,
+  children,
+}: {
+  candidates: Candidate[];
+  children?: React.ReactNode;
+}) {
+  const canPick = candidates.length >= 2;
   const [shown, setShown] = useState<Candidate | null>(null);
   const [spinning, setSpinning] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -56,20 +67,32 @@ export function RandomPickButton({ candidates }: { candidates: Candidate[] }) {
 
   return (
     <div className="space-y-3">
-      <Button type="button" variant="outline" size="sm" onClick={spin} disabled={spinning}>
-        <ShuffleIcon className={cn(spinning && "animate-pulse text-amber-500")} />
-        {shown ? "Elegir otra" : "Elegir una al azar"}
-      </Button>
+      <div className="flex flex-wrap items-center gap-3">
+        {canPick && (
+          <button
+            type="button"
+            onClick={spin}
+            disabled={spinning}
+            className="group flex items-center gap-3 text-sm font-medium"
+          >
+            <span className="flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/20 transition-transform duration-200 group-hover:scale-105 group-active:scale-95">
+              <ShuffleIcon size={22} weight="bold" className={cn(spinning && "animate-pulse")} />
+            </span>
+            <span className="pr-2">{shown ? "Elegir otra" : "Elegir al azar"}</span>
+          </button>
+        )}
+        {children}
+      </div>
 
       {shown && (
         <div
           // key fija mientras gira; al terminar cambia → la tarjeta hace un "pop"
           key={spinning ? "spinning" : shown.listItemId}
           className={cn(
-            "flex items-center gap-4 border p-3 transition-colors",
+            "flex items-center gap-4 border bg-card p-3 transition-colors",
             spinning
               ? "border-border"
-              : "border-amber-500/60 bg-amber-500/5 animate-in zoom-in-95 fade-in duration-300"
+              : "border-primary/60 bg-primary/5 animate-in zoom-in-95 fade-in duration-300"
           )}
           aria-live="polite"
         >
@@ -79,9 +102,9 @@ export function RandomPickButton({ candidates }: { candidates: Candidate[] }) {
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">
+            <SectionLabel as="p">
               {spinning ? "Eligiendo..." : "Hoy toca"}
-            </p>
+            </SectionLabel>
             <p className={cn("truncate font-medium", spinning && "text-muted-foreground")}>
               {shown.title}
             </p>

@@ -22,7 +22,7 @@ export function AddMediaButton({
     return (
       <span
         className={cn(
-          "flex shrink-0 items-center justify-center gap-1 text-xs font-medium text-amber-500",
+          "flex shrink-0 items-center justify-center gap-1 text-xs font-medium text-primary",
           compact ? "size-7 bg-black/75" : "min-w-20"
         )}
         aria-label="En la lista"
@@ -68,7 +68,7 @@ export function AddFeedback({
       role="status"
       className={cn(
         "flex items-center gap-1.5 text-xs animate-in fade-in slide-in-from-top-1 duration-200",
-        feedback.type === "ok" ? "text-amber-500" : "text-destructive"
+        feedback.type === "ok" ? "text-primary" : "text-destructive"
       )}
     >
       {feedback.type === "ok" && <CheckIcon size={12} weight="bold" />}

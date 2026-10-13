@@ -11,6 +11,7 @@ import { Skeleton } from "../ui/skeleton";
 import { HorizontalScroller } from "../ui/horizontal-scroller";
 import { PosterRowSkeleton } from "../media/PosterRowSkeleton";
 import { AddFeedback, AddMediaButton } from "./AddMediaButton";
+import { SectionLabel } from "@/components/ui/section-label";
 
 type Props = {
   listId: string;
@@ -43,9 +44,9 @@ export function ListSuggestions({ listId, existingKeys }: Props) {
   return (
     <section className="space-y-6 animate-in fade-in duration-300">
       <div className="space-y-1">
-        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+        <SectionLabel as="h2">
           Sugerencias
-        </h2>
+        </SectionLabel>
         <AddFeedback feedback={addToList.feedback} />
       </div>
 
@@ -114,11 +115,11 @@ function SuggestionCard({
             <span className="flex items-center gap-2 text-[10px] text-white/70">
               {item.year}
               {item.rating > 0 && (
-                <span className="text-amber-400">★ {item.rating.toFixed(1)}</span>
+                <span className="text-primary">★ {item.rating.toFixed(1)}</span>
               )}
             </span>
             {item.overview && (
-              <span className="line-clamp-4 text-[10px] leading-snug text-white/70">
+              <span className="line-clamp-4 font-sans text-[11px] leading-snug text-white/75">
                 {item.overview}
               </span>
             )}
@@ -141,7 +142,7 @@ function SuggestionCard({
         <p className="line-clamp-3 text-xs font-medium leading-snug sm:line-clamp-2">{item.title}</p>
         <p className="mt-0.5 flex items-center gap-2 text-[11px] text-muted-foreground">
           {item.year}
-          {item.rating > 0 && <span className="text-amber-500/90">★ {item.rating.toFixed(1)}</span>}
+          {item.rating > 0 && <span className="text-primary/90">★ {item.rating.toFixed(1)}</span>}
         </p>
       </div>
     </li>

@@ -8,6 +8,7 @@ import { acceptedMember } from "@/lib/lists";
 import { InvitationCard } from "@/components/lists/InvitationCard";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
+import { SectionLabel } from "@/components/ui/section-label";
 
 export default async function ListsPage() {
   const supabase = await createClient();
@@ -90,9 +91,9 @@ export default async function ListsPage() {
 
       {invitations.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+          <SectionLabel as="h2">
             Invitaciones ({invitations.length})
-          </h2>
+          </SectionLabel>
           <ul className="space-y-3">
             {invitations.map((inv) => (
               <InvitationCard
@@ -131,14 +132,14 @@ export default async function ListsPage() {
               >
                 <Link
                   href={`/lists/${list.id}`}
-                  className="group flex h-full flex-col gap-4 border p-4 transition-colors hover:border-foreground/30 hover:bg-muted/20 active:bg-muted/40"
+                  className="group flex h-full flex-col gap-4 border bg-card p-4 transition-colors hover:border-foreground/30 hover:bg-popover active:bg-muted"
                 >
                   <PosterStrip posters={items.map((item) => item.posterUrl)} total={total} />
 
                   <div className="flex-1">
                     <p className="font-medium leading-snug">{list.title}</p>
                     {list.description && (
-                      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                      <p className="mt-1 line-clamp-2 font-sans text-sm text-muted-foreground">
                         {list.description}
                       </p>
                     )}
@@ -155,7 +156,7 @@ export default async function ListsPage() {
                       </div>
                       <div className="h-0.5 w-full overflow-hidden rounded-full bg-muted">
                         <div
-                          className="h-full bg-amber-500 transition-all"
+                          className="h-full bg-primary transition-all"
                           style={{ width: `${pct}%` }}
                         />
                       </div>

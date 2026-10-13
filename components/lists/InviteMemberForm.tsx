@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { CheckIcon } from "@phosphor-icons/react/dist/ssr";
+import { CheckIcon, UserPlusIcon } from "@phosphor-icons/react/dist/ssr";
 
 export function InviteMemberForm({ listId }: { listId: string }) {
   const router = useRouter();
@@ -44,29 +44,27 @@ export function InviteMemberForm({ listId }: { listId: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-wrap gap-2">
+    // Una sola línea: campo + botón pegados (el botón ya no compite con el ámbar
+    // de la cabecera)
+    <form onSubmit={handleSubmit} className="flex flex-wrap">
       <Input
-        placeholder="@username"
+        placeholder="@usuario"
+        aria-label="Usuario a invitar"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
-        className="max-w-xs"
+        className="h-9 min-w-0 flex-1 border-r-0"
       />
-      <Button type="submit" disabled={loading}>
-        {loading ? (
-          <>
-            <Spinner /> Invitando...
-          </>
-        ) : (
-          "Invitar"
-        )}
+      <Button type="submit" variant="outline" disabled={loading || !username.trim()} className="h-9 px-3">
+        {loading ? <Spinner /> : <UserPlusIcon size={15} />}
+        {loading ? "Invitando" : "Invitar"}
       </Button>
       {error && (
-        <p className="w-full text-sm text-destructive animate-in fade-in duration-200">{error}</p>
+        <p className="mt-2 w-full text-sm text-destructive animate-in fade-in duration-200">{error}</p>
       )}
       {success && (
         <p
           role="status"
-          className="flex w-full items-center gap-1.5 text-sm text-amber-500 animate-in fade-in slide-in-from-top-1 duration-300"
+          className="mt-2 flex w-full items-center gap-1.5 text-sm text-primary animate-in fade-in slide-in-from-top-1 duration-300"
         >
           <CheckIcon size={14} weight="bold" /> {success}
         </p>

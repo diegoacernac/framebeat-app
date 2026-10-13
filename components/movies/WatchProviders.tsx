@@ -5,6 +5,7 @@ import {
   type WatchProvidersByCountry,
 } from "@/lib/tmdb";
 import { getProviderLink } from "@/lib/watchLinks";
+import { SectionLabel } from "@/components/ui/section-label";
 
 type ProviderEntry = { provider: WatchProvider; note?: string };
 
@@ -27,9 +28,9 @@ function ProviderList({
 
   return (
     <div className="space-y-2">
-      <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <SectionLabel as="h3">
         {title}
-      </h3>
+      </SectionLabel>
 
       <div className="flex flex-wrap gap-2">
         {sorted.map(({ provider: p, note }) => {
@@ -41,7 +42,7 @@ function ProviderList({
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 border px-2 py-1 text-xs transition-colors hover:border-amber-500 hover:text-amber-500"
+              className="flex items-center gap-2 border px-2 py-1 text-xs transition-colors hover:border-primary hover:text-primary"
               title={`Ver en ${p.provider_name}`}
             >
               {logo && (

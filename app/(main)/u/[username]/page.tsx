@@ -87,10 +87,10 @@ export default async function ProfilePage({
           <p className="text-muted-foreground">@{profile.username}</p>
         </div>
       </div>
-      {profile.bio && <p className="text-sm">{profile.bio}</p>}
+      {profile.bio && <p className="max-w-[68ch] font-sans text-[15px]">{profile.bio}</p>}
 
       {!isOwnProfile && (
-        <p className="border-l-2 border-amber-500/60 pl-3 text-xs text-muted-foreground">
+        <p className="border-l-2 border-primary/60 pl-3 text-xs text-muted-foreground">
           Solo ves lo que calificó de títulos que están en listas que compartes con esta persona.
         </p>
       )}

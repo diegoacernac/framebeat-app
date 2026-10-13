@@ -8,6 +8,7 @@ import { getListComparison } from "@/lib/list-compare";
 import { createClient } from "@/lib/supabase/server";
 import { getMediaHref } from "@/lib/media";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { SectionLabel } from "@/components/ui/section-label";
 
 // Comparar gustos entre los miembros de UNA lista, solo sobre sus títulos.
 // Es la versión con sentido de las viejas "estadísticas de pareja": aquí
@@ -18,7 +19,7 @@ function Stars({ value }: { value: number }) {
   const full = Math.round(value);
   return (
     <span className="whitespace-nowrap tracking-wider" aria-label={`${value.toFixed(1)} de 5 estrellas`}>
-      <span className="text-amber-500">{"★".repeat(full)}</span>
+      <span className="text-primary">{"★".repeat(full)}</span>
       <span className="text-foreground/20">{"★".repeat(5 - full)}</span>
     </span>
   );
@@ -55,7 +56,7 @@ export default async function CompareListPage({ params }: { params: Promise<{ id
         {members.map((m) => {
           const { rated, average } = summaries.get(m.userId)!;
           return (
-            <li key={m.userId} className="flex items-center gap-3 border p-4">
+            <li key={m.userId} className="flex items-center gap-3 border bg-card p-4">
               <Avatar className="size-10">
                 {m.avatarUrl && <AvatarImage src={m.avatarUrl} alt={`@${m.username}`} />}
                 <AvatarFallback>{m.username.slice(0, 2).toUpperCase()}</AvatarFallback>
@@ -67,7 +68,7 @@ export default async function CompareListPage({ params }: { params: Promise<{ id
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {rated}/{items.length} calificadas
-                  {average !== null && <span className="text-amber-500"> · ★ {average.toFixed(1)}</span>}
+                  {average !== null && <span className="text-primary"> · ★ {average.toFixed(1)}</span>}
                 </p>
               </div>
             </li>
@@ -76,26 +77,26 @@ export default async function CompareListPage({ params }: { params: Promise<{ id
       </ul>
 
       {shared.length === 0 ? (
-        <p className="border p-5 text-sm text-muted-foreground">
+        <p className="border bg-card p-5 font-sans text-sm text-muted-foreground">
           Todavía no hay títulos calificados por más de una persona. Cuando al menos dos califiquen el mismo, aquí verán en qué coinciden.
         </p>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {/* Coincidencia: misma nota (en series, promedios a menos de media estrella) */}
-          <section className="space-y-3 border p-5">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Coinciden</p>
+          <section className="space-y-3 border bg-card p-5">
+            <SectionLabel as="p">Coinciden</SectionLabel>
             <p className="text-3xl font-bold tabular-nums">
               {agreements}
               <span className="text-lg font-normal text-muted-foreground"> de {shared.length}</span>
             </p>
             <div className="h-1.5 overflow-hidden bg-muted">
-              <div className="h-full bg-amber-500" style={{ width: `${(agreements / shared.length) * 100}%` }} />
+              <div className="h-full bg-primary" style={{ width: `${(agreements / shared.length) * 100}%` }} />
             </div>
             <p className="text-xs text-muted-foreground">Títulos calificados por dos o más, con la misma nota.</p>
           </section>
 
-          <section className="space-y-3 border p-5">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">La que más divide</p>
+          <section className="space-y-3 border bg-card p-5">
+            <SectionLabel as="p">La que más divide</SectionLabel>
             {mostDivisive ? (
               <Link href={getMediaHref(mostDivisive.type, mostDivisive.externalId)} className="group flex gap-4">
                 <div className="relative aspect-[2/3] w-14 shrink-0 overflow-hidden bg-muted">
@@ -127,7 +128,7 @@ export default async function CompareListPage({ params }: { params: Promise<{ id
       {/* Detalle por título: en móvil cada fila apila las notas debajo del título */}
       {items.length > 0 && (
         <section className="space-y-3">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">Título por título</p>
+          <SectionLabel as="p">Título por título</SectionLabel>
           <ul className="divide-y border-y">
             {rows.map((r) => (
               <li key={r.mediaItemId} className="flex gap-3 py-3">
@@ -156,7 +157,7 @@ export default async function CompareListPage({ params }: { params: Promise<{ id
                   )}
                 </div>
                 {r.spread !== null && r.spread >= 1 && (
-                  <span className="self-start whitespace-nowrap text-xs text-amber-500/90">
+                  <span className="self-start whitespace-nowrap text-xs text-primary/90">
                     {r.spread.toFixed(r.spread % 1 ? 1 : 0)}★ de diferencia
                   </span>
                 )}

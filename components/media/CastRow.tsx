@@ -45,7 +45,7 @@ export function CastRow({ cast }: { cast: CastMember[] }) {
                 </span>
               </div>
               <div>
-                <p className="line-clamp-2 text-sm font-medium leading-snug transition-colors group-hover:text-amber-500">
+                <p className="line-clamp-2 text-sm font-medium leading-snug transition-colors group-hover:text-primary">
                   {actor.name}
                 </p>
                 {actor.character && (

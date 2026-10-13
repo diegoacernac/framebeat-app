@@ -80,7 +80,7 @@ export function DesktopNav({ username }: { username: string }) {
             className={cn(
               "px-3 py-1.5 text-sm transition-colors",
               active
-                ? "bg-muted font-medium text-amber-500"
+                ? "bg-muted font-medium text-primary"
                 : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
             )}
           >
@@ -114,7 +114,7 @@ export function BottomNav({ username }: { username: string }) {
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "group flex h-16 flex-col items-center justify-center gap-1 text-[10px] transition-colors",
-                  active ? "text-amber-500" : "text-muted-foreground active:text-foreground"
+                  active ? "text-primary" : "text-muted-foreground active:text-foreground"
                 )}
               >
                 <ItemIcon

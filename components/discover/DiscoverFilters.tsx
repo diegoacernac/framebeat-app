@@ -7,6 +7,8 @@ import { cn } from "../../lib/utils";
 import { Spinner } from "../ui/spinner";
 import { PeopleSearch, type Person } from "./PeopleSearch";
 import { MOODS, type DiscoverKind } from "@/lib/discover";
+import { SectionLabel } from "@/components/ui/section-label";
+import { chipClass } from "@/components/ui/chip";
 
 // IDs de TMDB para Perú (son los mismos para películas y series)
 const PLATFORMS = [
@@ -141,15 +143,7 @@ export function DiscoverFilters({
   ].filter((label): label is string => Boolean(label));
 
   // Clase helper para no repetir la lógica de active/inactive en cada botón
-  function pillClass(active: boolean) {
-    return cn(
-      "border px-3 py-1 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-foreground/25 disabled:hover:text-foreground/80",
-      // Activo: relleno sólido, se distingue de un vistazo aunque haya muchos
-      active
-        ? "border-amber-500 bg-amber-500 font-medium text-black"
-        : "border-foreground/25 text-foreground/80 hover:border-foreground/70 hover:text-foreground"
-    );
-  }
+  const pillClass = (active: boolean) => chipClass(active);
 
   return (
     // data-pending: DiscoverResults lo detecta con CSS para atenuar los resultados viejos
@@ -170,7 +164,7 @@ export function DiscoverFilters({
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 text-sm transition-colors",
                   active
-                    ? "bg-amber-500 font-medium text-black"
+                    ? "bg-primary font-medium text-primary-foreground"
                     : "text-foreground/80 hover:text-foreground"
                 )}
               >
@@ -195,7 +189,7 @@ export function DiscoverFilters({
           <FunnelSimpleIcon size={16} className="sm:hidden" />
           <span className="hidden sm:inline">Filtros</span>
           {summary.length > 0 && (
-            <span className="bg-amber-500 px-1.5 text-xs font-medium tabular-nums text-black">
+            <span className="bg-primary px-1.5 text-xs font-medium tabular-nums text-primary-foreground">
               {summary.length}
             </span>
           )}
@@ -224,7 +218,7 @@ export function DiscoverFilters({
       </div>
 
       {open && (
-      <div id="discover-filters" className="space-y-6 animate-in fade-in slide-in-from-top-1 duration-200">
+      <div id="discover-filters" className="space-y-6 border bg-card p-4 animate-in fade-in slide-in-from-top-1 duration-200 sm:p-6">
       {/* Solo lo que se puede ver en Perú */}
       <div>
         <button
@@ -239,7 +233,7 @@ export function DiscoverFilters({
 
       {/* Plataformas */}
       <div className="space-y-2">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Plataforma</p>
+        <SectionLabel as="p">Plataforma</SectionLabel>
         <div className="flex flex-wrap gap-2">
           {PLATFORMS.map((p) => (
             <button key={p.id} type="button" onClick={() => toggleProvider(p.id)} className={pillClass(providers.has(p.id))}>
@@ -251,7 +245,7 @@ export function DiscoverFilters({
 
       {/* Situación */}
       <div className="space-y-2">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Situación</p>
+        <SectionLabel as="p">Situación</SectionLabel>
         <div className="flex flex-wrap gap-2">
           {MOODS.map((m) => {
             // TMDB no tiene géneros de Terror ni Romance para series
@@ -274,7 +268,7 @@ export function DiscoverFilters({
 
       {/* Época */}
       <div className="space-y-2">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Época</p>
+        <SectionLabel as="p">Época</SectionLabel>
         <div className="flex flex-wrap gap-2">
           {DECADES.map((d) => (
             <button key={d.id} type="button" onClick={() => setDecade((prev) => prev === d.id ? "" : d.id)} className={pillClass(decade === d.id)}>
@@ -287,7 +281,7 @@ export function DiscoverFilters({
       {/* Duración: solo películas (en series sería por episodio) */}
       {!isTv && (
         <div className="space-y-2 animate-in fade-in duration-200">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Duración</p>
+          <SectionLabel as="p">Duración</SectionLabel>
           <div className="flex flex-wrap gap-2">
             {RUNTIMES.map((r) => (
               <button key={r.id} type="button" onClick={() => setRuntime((prev) => prev === r.id ? "" : r.id)} className={pillClass(runtime === r.id)}>
@@ -308,9 +302,9 @@ export function DiscoverFilters({
       {/* Director / Actor: solo películas (TMDB no filtra series por persona) */}
       {!isTv && (
         <div className="space-y-2 animate-in fade-in duration-200">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <SectionLabel as="p">
             Director o actor
-          </p>
+          </SectionLabel>
           <PeopleSearch selected={people} onChange={setPeople} />
         </div>
       )}

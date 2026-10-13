@@ -111,7 +111,7 @@ export function RatingForm({
         <p
           key={success}
           role="status"
-          className="flex items-center gap-1.5 text-sm text-amber-500 animate-in fade-in slide-in-from-top-1 duration-300"
+          className="flex items-center gap-1.5 text-sm text-primary animate-in fade-in slide-in-from-top-1 duration-300"
         >
           <CheckIcon size={14} weight="bold" /> {success}
         </p>

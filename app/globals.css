@@ -83,38 +83,46 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+/* Tema oscuro (el único que usa la app).
+   - Grises con un toque cálido (hue 70, el del ámbar): más "cine", menos gris
+     de oficina. Croma muy baja para que no se note como color.
+   - Capas: background (fondo) < card (tarjetas y paneles) < popover (menús)
+     < muted (rellenos, esqueletos). Así las tarjetas se separan del fondo sin
+     depender solo del borde.
+   - primary = el ámbar de la marca. Úsalo vía text-primary / bg-primary /
+     border-primary en vez de amber-500, así el acento se ajusta en un lugar. */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
+  --background: oklch(0.145 0.004 70);
+  --foreground: oklch(0.97 0.004 80);
+  --card: oklch(0.175 0.005 70);
+  --card-foreground: oklch(0.97 0.004 80);
+  --popover: oklch(0.2 0.006 70);
+  --popover-foreground: oklch(0.97 0.004 80);
   --primary: oklch(0.769 0.188 70);
-  --primary-foreground: oklch(0.145 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.16 0.01 70);
+  --secondary: oklch(0.26 0.006 70);
+  --secondary-foreground: oklch(0.97 0.004 80);
+  --muted: oklch(0.24 0.006 70);
+  --muted-foreground: oklch(0.72 0.012 75);
+  --accent: oklch(0.26 0.006 70);
+  --accent-foreground: oklch(0.97 0.004 80);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+  --border: oklch(0.95 0.02 80 / 11%);
+  --input: oklch(0.95 0.02 80 / 15%);
   --ring: oklch(0.769 0.188 70);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: oklch(0.175 0.005 70);
+  --sidebar-foreground: oklch(0.97 0.004 80);
+  --sidebar-primary: oklch(0.769 0.188 70);
+  --sidebar-primary-foreground: oklch(0.16 0.01 70);
+  --sidebar-accent: oklch(0.26 0.006 70);
+  --sidebar-accent-foreground: oklch(0.97 0.004 80);
+  --sidebar-border: oklch(0.95 0.02 80 / 11%);
+  --sidebar-ring: oklch(0.769 0.188 70);
 }
 
 @layer base {
@@ -124,9 +132,17 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Tipografía mixta: JetBrains Mono es la base (identidad: logo, títulos,
+     etiquetas, números, botones). Los textos para LEER (sinopsis, reseñas,
+     descripciones, párrafos, campos donde se escribe) usan font-sans (Geist),
+     que se activa a mano en esos lugares. */
   html {
     @apply font-mono;
     overflow-y: scroll;
+  }
+  input,
+  textarea {
+    @apply font-sans;
   }
   @media (prefers-reduce-motion: reduce) {
     *,

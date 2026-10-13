@@ -6,6 +6,7 @@ import { useDebouncedFetch } from "@/hooks/useDebouncedFetch";
 import { MediaCard } from "./MediaCard";
 import { MediaCardSkeleton } from "./MediaCardSkeleton";
 import { getPosterUrl } from "@/lib/tmdb";
+import { SectionLabel } from "@/components/ui/section-label";
 
 type MovieResult = {
   id: number;
@@ -42,9 +43,9 @@ export function MediaSearch({ initialResults = [], kind = "movie" }: Props) {
       />
 
       {showingInitial && (
-        <p className="text-xs uppercase tracking-wider text-muted-foreground">
+        <SectionLabel as="p">
           Populares ahora
-        </p>
+        </SectionLabel>
       )}
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-5">

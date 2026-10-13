@@ -25,6 +25,7 @@ import { WatchProviders } from "@/components/movies/WatchProviders";
 import { SeasonPicker } from "@/components/series/SeasonPicker";
 import { AddToListButton } from "@/components/lists/AddToListButton";
 import { getUserListsWithMedia } from "@/lib/lists";
+import { SectionLabel } from "@/components/ui/section-label";
 
 export default async function SeriesPage({
   params,
@@ -119,7 +120,7 @@ export default async function SeriesPage({
                 {tv.number_of_seasons} {tv.number_of_seasons === 1 ? "temporada" : "temporadas"}
               </span>
               {tv.vote_average > 0 && (
-                <span className="font-medium text-amber-500">
+                <span className="font-medium text-primary">
                   ★ {tv.vote_average.toFixed(1)}
                   <span className="font-normal text-muted-foreground">/10</span>
                 </span>
@@ -139,7 +140,7 @@ export default async function SeriesPage({
         {tv.overview && (
           <ExpandableText
             text={tv.overview}
-            className="max-w-3xl text-sm leading-relaxed text-muted-foreground"
+            className="max-w-[68ch] font-sans text-[15px] leading-relaxed text-foreground/75"
           />
         )}
 
@@ -244,9 +245,9 @@ export default async function SeriesPage({
         </section>
         {topCast.length > 0 && (
           <section className="mt-8">
-            <h2 className="mb-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <SectionLabel as="h2" className="mb-4">
               Reparto
-            </h2>
+            </SectionLabel>
             <CastRow cast={topCast} />
           </section>
         )}

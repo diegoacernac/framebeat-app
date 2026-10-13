@@ -1,6 +1,7 @@
 "use client";
 
 import { MediaCard } from "@/components/media/MediaCard";
+import { Stat } from "@/components/ui/stat";
 
 type RatingItem = {
   stars: number;
@@ -63,22 +64,13 @@ export function ProfileRatingsTabs({
   return (
     <div className="space-y-6">
       {total > 0 && (
-        <div className="flex flex-wrap gap-6 text-sm border-b pb-6">
-          <div>
-            <p className="text-2xl font-semibold">{total}</p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">calificaciones</p>
-          </div>
+        <div className="flex flex-wrap gap-8 border-b pb-6">
+          <Stat variant="inline" value={total} label="Calificaciones" />
           {avgMovies !== null && (
-            <div>
-              <p className="text-2xl font-semibold text-amber-500">{avgMovies.toFixed(1)}<span className="text-base text-muted-foreground">/5</span></p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider">prom. películas</p>
-            </div>
+            <Stat variant="inline" accent value={avgMovies.toFixed(1)} suffix="/5" label="Prom. películas" />
           )}
           {avgAlbums !== null && (
-            <div>
-              <p className="text-2xl font-semibold text-violet-400">{avgAlbums.toFixed(1)}<span className="text-base text-muted-foreground">/5</span></p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider">prom. álbumes</p>
-            </div>
+            <Stat variant="inline" value={avgAlbums.toFixed(1)} suffix="/5" label="Prom. álbumes" />
           )}
         </div>
       )}

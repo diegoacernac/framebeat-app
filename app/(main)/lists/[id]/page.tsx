@@ -13,15 +13,17 @@ import {
 } from "@/lib/db/schema";
 import { createClient } from "../../../../lib/supabase/server";
 import { InviteMemberForm } from "@/components/lists/InviteMemberForm";
-import { ListAddMovieSearch } from "@/components/lists/ListAddMovieSearch";
+import { ListAddPanel } from "@/components/lists/ListAddPanel";
 import { ListSuggestions } from "@/components/lists/ListSuggestions";
 import { ListItemRow } from "@/components/lists/ListItemRow";
 import { DeleteListButton } from "@/components/lists/DeleteListButton";
 import { RandomPickButton } from "@/components/lists/RandomPickButton";
-import { CaretRightIcon, ScalesIcon } from "@phosphor-icons/react/dist/ssr";
+import { CaretRightIcon, PlusIcon, ScalesIcon, UserPlusIcon } from "@phosphor-icons/react/dist/ssr";
+import { ListHero } from "@/components/lists/ListHero";
 import { Button } from "@/components/ui/button";
 import { getMediaHref } from "@/lib/media";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { SectionLabel, sectionLabelClass } from "@/components/ui/section-label";
 
 // metadata.year lo guardan todos los botones de añadir ("2014")
 function getYear(metadata: unknown) {
@@ -92,6 +94,11 @@ export default async function ListDetailPage({
         .sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999))
     );
 
+  // Miembros que aceptaron, el dueño primero (cabecera y "Comparar gustos")
+  const acceptedMembers = members
+    .filter((m) => m.status === "accepted")
+    .sort((a, b) => (a.role === "owner" ? -1 : b.role === "owner" ? 1 : 0));
+
   // Privacidad: solo se muestran calificaciones de quienes ya aceptaron
   const memberUserIds = members.filter((m) => m.status === "accepted").map((m) => m.userId);
   const mediaItemIds = items.map((i) => i.mediaItemId);
@@ -134,7 +141,6 @@ export default async function ListDetailPage({
   const completedSet = new Set(progressRows.map((p) => p.mediaItemId));
   const completedCount = completedSet.size;
   const totalCount = items.length;
-  const progressPct = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
   const listAvgStars =
     allRatings.length > 0
       ? allRatings.reduce((sum, r) => sum + r.stars, 0) / allRatings.length
@@ -145,7 +151,7 @@ export default async function ListDetailPage({
   const pendingItems = items.filter((i) => !completedSet.has(i.mediaItemId));
   const watchedItems = items.filter((i) => completedSet.has(i.mediaItemId));
 
-  function renderRow(item: (typeof items)[number]) {
+  function renderRow(item: (typeof items)[number], i: number) {
     const itemRatings = allRatings.filter((r) => r.mediaItemId === item.mediaItemId);
     const averageStars =
       itemRatings.length > 0
@@ -166,6 +172,7 @@ export default async function ListDetailPage({
         memberRatings={itemRatings}
         completed={completedSet.has(item.mediaItemId)}
         currentUserId={userId}
+        index={i + 1}
       />
     );
   }
@@ -174,56 +181,50 @@ export default async function ListDetailPage({
     // En web: la lista y sugerencias a la izquierda, añadir/miembros en una
     // columna lateral fija. En móvil todo va en una sola columna, en ese orden.
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-8 p-4 sm:p-8 lg:max-w-6xl animate-in fade-in duration-300">
-      {/* Header */}
-      <div className="space-y-2">
-        <Link href="/lists" className="text-xs text-muted-foreground hover:underline">
-          ← Mis listas
-        </Link>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0 space-y-2">
-            <h1 className="text-2xl font-semibold">{list.title}</h1>
-            {list.description && (
-              <p className="text-sm text-muted-foreground">{list.description}</p>
+      <div>
+        <ListHero
+          backHref="/lists"
+          title={list.title}
+          description={list.description}
+          posters={items.slice(0, 4).map((i) => i.posterUrl)}
+          members={acceptedMembers}
+          totalCount={totalCount}
+          completedCount={completedCount}
+          averageStars={listAvgStars}
+        >
+          {/* Barra de acciones: elegir al azar (principal) + secundarias */}
+          <RandomPickButton
+            candidates={pendingItems.map((i) => ({
+              listItemId: i.listItemId,
+              title: i.title,
+              posterUrl: i.posterUrl,
+              href: getMediaHref(i.mediaType, i.externalId),
+            }))}
+          >
+            {/* Comparar gustos va en su propia vista; solo con 2+ miembros */}
+            {acceptedMembers.length >= 2 && (
+              <Button variant="outline" size="sm" asChild className="bg-background/40 backdrop-blur">
+                <Link href={`/lists/${listId}/comparar`}>
+                  <ScalesIcon size={14} /> Comparar gustos
+                </Link>
+              </Button>
             )}
-          </div>
-          {/* Comparar gustos va en su propia vista: aquí recargaría la lista,
-              sobre todo en móvil. Solo tiene sentido con 2+ miembros. */}
-          {members.filter((m) => m.status === "accepted").length >= 2 && (
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/lists/${listId}/comparar`}>
-                <ScalesIcon size={14} /> Comparar gustos
-              </Link>
+            <Button variant="ghost" size="sm" asChild>
+              <a href="#anadir">
+                <PlusIcon size={14} /> Añadir
+              </a>
             </Button>
-          )}
-        </div>
+            <Button variant="ghost" size="sm" asChild>
+              <a href="#miembros">
+                <UserPlusIcon size={14} /> Invitar
+              </a>
+            </Button>
+          </RandomPickButton>
+        </ListHero>
       </div>
 
       <div className="space-y-8 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-12 lg:space-y-0">
       <div className="min-w-0 space-y-8">
-      {/* Progress stats */}
-      {totalCount > 0 && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">
-              <span className="font-medium text-foreground">{completedCount}</span>
-              /{totalCount} vistas
-            </span>
-            {listAvgStars !== null && (
-              <span className="text-amber-500 font-medium">
-                ★ {listAvgStars.toFixed(1)}
-                <span className="text-muted-foreground font-normal text-xs"> promedio</span>
-              </span>
-            )}
-          </div>
-          <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full bg-amber-500 transition-all duration-500"
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
-        </div>
-      )}
-
       {/* Items — primary content */}
       {totalCount === 0 ? (
         <p className="py-4 text-sm text-muted-foreground">
@@ -233,20 +234,9 @@ export default async function ListDetailPage({
         <>
           {/* Por ver — lo principal */}
           <section className="space-y-3">
-            <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+            <SectionLabel as="h2">
               Por ver ({pendingItems.length})
-            </h2>
-
-            {pendingItems.length >= 2 && (
-              <RandomPickButton
-                candidates={pendingItems.map((i) => ({
-                  listItemId: i.listItemId,
-                  title: i.title,
-                  posterUrl: i.posterUrl,
-                  href: getMediaHref(i.mediaType, i.externalId),
-                }))}
-              />
-            )}
+            </SectionLabel>
 
             {pendingItems.length === 0 ? (
               <p className="py-2 text-sm text-muted-foreground animate-in fade-in duration-300">
@@ -260,7 +250,7 @@ export default async function ListDetailPage({
           {/* Vistas — plegadas para no estorbar */}
           {watchedItems.length > 0 && (
             <details className="group" open={pendingItems.length === 0}>
-              <summary className="flex cursor-pointer list-none items-center gap-1.5 text-sm font-medium uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground [&::-webkit-details-marker]:hidden">
+              <summary className={`${sectionLabelClass} flex cursor-pointer list-none items-center gap-1.5 transition-colors hover:text-foreground [&::-webkit-details-marker]:hidden`}>
                 <CaretRightIcon
                   size={12}
                   weight="bold"
@@ -281,45 +271,34 @@ export default async function ListDetailPage({
       </div>
 
       {/* Management — secondary (en web: columna lateral fija) */}
-      <aside className="space-y-8 lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto lg:pr-1">
-      <section className="space-y-3 border-t pt-6 lg:border-t-0 lg:pt-0">
-        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-          Añadir película
-        </h2>
-        <ListAddMovieSearch listId={listId} kind="movie" existingKeys={existingKeys} />
+      <aside className="space-y-4 lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto lg:pr-1">
+      <section id="anadir" className="scroll-mt-24">
+        <ListAddPanel listId={listId} existingKeys={existingKeys} />
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-          Añadir serie
-        </h2>
-        <ListAddMovieSearch listId={listId} kind="tv" existingKeys={existingKeys} />
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-          Miembros
-        </h2>
-        <ul className="flex flex-wrap gap-3">
+      <section id="miembros" className="scroll-mt-24 space-y-4 border bg-card p-4">
+        <SectionLabel as="h2">Miembros · {acceptedMembers.length}</SectionLabel>
+        <ul className="space-y-2.5">
           {members.map((m) => (
-            <li key={m.userId} className="flex items-center gap-2 text-sm">
-              <Avatar className="size-7">
+            <li key={m.userId} className="flex items-center gap-3 text-sm">
+              <Avatar className="size-8">
                 {m.avatarUrl && <AvatarImage src={m.avatarUrl} alt={m.username} />}
-                <AvatarFallback>{m.username.slice(0, 2).toUpperCase()}</AvatarFallback>
+                <AvatarFallback className="text-xs">{m.username.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               {/* Pendiente: aún no comparten la lista, su perfil no es visible */}
               {m.status === "accepted" ? (
-                <Link href={`/u/${m.username}`} className="hover:underline">
+                <Link href={`/u/${m.username}`} className="min-w-0 flex-1 truncate hover:underline">
                   @{m.username}
+                  {m.userId === userId && <span className="text-muted-foreground"> (tú)</span>}
                 </Link>
               ) : (
-                <span className="text-muted-foreground">@{m.username}</span>
+                <span className="min-w-0 flex-1 truncate text-muted-foreground">@{m.username}</span>
               )}
               {m.role === "owner" && (
-                <span className="text-xs text-muted-foreground">(dueño)</span>
+                <span className="shrink-0 border px-1.5 py-0.5 text-[11px] text-muted-foreground">Dueño</span>
               )}
               {m.status === "pending" && (
-                <span className="text-xs text-amber-500/80">invitación pendiente</span>
+                <span className="shrink-0 border border-primary/40 px-1.5 py-0.5 text-[11px] text-primary">Pendiente</span>
               )}
             </li>
           ))}
@@ -328,12 +307,9 @@ export default async function ListDetailPage({
       </section>
 
       {membership.role === "owner" && (
-        <section className="space-y-3 border-t pt-6">
-          <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-            Zona de peligro
-          </h2>
+        <div className="flex justify-end px-1 pt-1">
           <DeleteListButton listId={listId} title={list.title} />
-        </section>
+        </div>
       )}
       </aside>
       </div>

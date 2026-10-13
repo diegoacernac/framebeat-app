@@ -32,7 +32,7 @@ export function ReviewList({ reviews }: { reviews: Review[] }) {
               </Link>
               <StarRating value={r.stars} readOnly />
             </div>
-            {r.review && <p className="text-sm">{r.review}</p>}
+            {r.review && <p className="max-w-[68ch] font-sans text-[15px] leading-relaxed">{r.review}</p>}
           </div>
         </article>
       ))}

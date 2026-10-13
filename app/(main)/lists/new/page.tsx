@@ -10,8 +10,9 @@ export default async function NewListPage() {
   if (!user) redirect("/login");
 
   return (
-    <main className="mx-auto w-full max-w-lg flex-1 p-8 animate-in fade-in duration-300">
-      <h1 className="mb-6 text-2xl font-semibold">Nueva lista</h1>
+    // El título de la página es el propio campo de nombre (estilo documento)
+    <main className="mx-auto w-full max-w-4xl flex-1 p-4 pt-8 sm:p-8 sm:pt-12 lg:max-w-6xl animate-in fade-in duration-300">
+      <h1 className="sr-only">Nueva lista</h1>
       <CreateListForm />
     </main>
   );

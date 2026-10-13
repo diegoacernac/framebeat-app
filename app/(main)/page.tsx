@@ -133,7 +133,7 @@ export default async function HomePage() {
         <PosterWall posters={wallPosters} className="-z-10" />
         <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 py-24 text-center sm:py-32">
           <h1 className="text-5xl font-semibold tracking-tight sm:text-6xl">FrameBeat</h1>
-          <p className="max-w-xl text-lg text-balance text-muted-foreground">
+          <p className="max-w-xl font-sans text-lg text-balance text-muted-foreground">
             Decidan qué ver juntos, guarden lo pendiente en listas compartidas y califiquen lo que vieron.
           </p>
           <div className="flex flex-wrap justify-center gap-3 pt-2">
@@ -156,9 +156,9 @@ export default async function HomePage() {
       <section className="mx-auto grid max-w-4xl gap-10 px-4 pb-20 sm:px-8 md:grid-cols-[minmax(0,1fr)_320px] md:items-center lg:max-w-6xl">
         <ul className="grid gap-3 sm:grid-cols-3 md:grid-cols-1">
           {features.map((f) => (
-            <li key={f.title} className="space-y-1.5 border p-4">
-              <p className="text-xs font-medium uppercase tracking-wider text-amber-500">{f.title}</p>
-              <p className="text-sm text-muted-foreground">{f.text}</p>
+            <li key={f.title} className="space-y-1.5 border bg-card p-4">
+              <p className="text-xs font-medium uppercase tracking-[0.12em] text-primary">{f.title}</p>
+              <p className="font-sans text-sm text-muted-foreground">{f.text}</p>
             </li>
           ))}
         </ul>
@@ -186,7 +186,7 @@ export default async function HomePage() {
                   <span>2 miembros</span>
                 </div>
                 <div className="h-0.5 w-full overflow-hidden rounded-full bg-muted">
-                  <div className="h-full w-2/5 bg-amber-500" />
+                  <div className="h-full w-2/5 bg-primary" />
                 </div>
               </div>
             </div>

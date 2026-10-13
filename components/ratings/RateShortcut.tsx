@@ -14,9 +14,9 @@ export function RateShortcut({
   return (
     <a
       href={href}
-      className="inline-flex h-8 items-center gap-1.5 border border-foreground/20 bg-background/40 px-2.5 text-xs font-medium backdrop-blur transition-colors hover:border-amber-500 hover:text-amber-500"
+      className="inline-flex h-8 items-center gap-1.5 border border-foreground/20 bg-background/40 px-2.5 text-xs font-medium backdrop-blur transition-colors hover:border-primary hover:text-primary"
     >
-      <StarIcon size={14} weight={stars ? "fill" : "regular"} className="text-amber-500" />
+      <StarIcon size={14} weight={stars ? "fill" : "regular"} className="text-primary" />
       {stars ? (
         <>
           {stars}/5 <span className="font-normal text-muted-foreground">· Tu nota</span>

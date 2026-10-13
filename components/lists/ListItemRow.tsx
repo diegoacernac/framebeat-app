@@ -3,10 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "../ui/button";
 import { StarRating } from "../ratings/StarRatings";
 import { useOptimistic, useState, useTransition } from "react";
-import { CheckIcon, TrashIcon } from "@phosphor-icons/react/dist/ssr";
+import { CheckIcon, StarIcon, TrashIcon } from "@phosphor-icons/react/dist/ssr";
 import { Spinner } from "../ui/spinner";
 import { cn } from "@/lib/utils";
 import { getMediaHref } from "@/lib/media";
@@ -31,6 +30,8 @@ type Props = {
   memberRatings: MemberRating[];
   completed: boolean;
   currentUserId: string;
+  // Número de la fila (1, 2, 3...), como en una playlist
+  index?: number;
 };
 
 export function ListItemRow({
@@ -46,6 +47,7 @@ export function ListItemRow({
   memberRatings,
   completed,
   currentUserId,
+  index,
 }: Props) {
   const router = useRouter();
   const href = getMediaHref(mediaType, externalId);
@@ -93,6 +95,8 @@ export function ListItemRow({
   }
 
   const myRating = memberRatings.find((r) => r.userId === currentUserId);
+  // Calificar lleva directo al formulario de la ficha (en series, a las temporadas)
+  const rateHref = `${href}#${mediaType === "tv" ? "temporadas" : "calificar"}`;
   const isPortrait = mediaType !== "album";
 
   return (
@@ -107,19 +111,27 @@ export function ListItemRow({
     <div className="min-h-0 overflow-hidden">
     <article
       className={cn(
-        "flex gap-4 border-b py-4 transition-opacity duration-300",
+        // Fila tipo playlist: una línea, acciones redondas a la derecha
+        "group/row flex items-center gap-3 border-b px-2 py-2.5 transition-[background-color] duration-200 hover:bg-card sm:gap-4",
         // Entrada: al añadir un ítem, solo la fila nueva se monta y se anima
         "animate-in fade-in slide-in-from-top-2 duration-300",
-        optimisticCompleted && "opacity-50",
         removing && "pointer-events-none opacity-40"
       )}
       aria-busy={removing}
     >
+      {index !== undefined && (
+        <span className="w-5 shrink-0 text-right text-sm tabular-nums text-muted-foreground">
+          {index}
+        </span>
+      )}
+
+      {/* Vista: póster y título apagados (las acciones siguen a color) */}
       <Link
         href={href}
         className={cn(
-          "group relative shrink-0 self-start overflow-hidden bg-muted",
-          isPortrait ? "w-14 aspect-[2/3] lg:w-16" : "size-14 lg:size-16"
+          "group relative shrink-0 overflow-hidden bg-muted transition-opacity",
+          isPortrait ? "w-11 aspect-[2/3] lg:w-12" : "size-11 lg:size-12",
+          optimisticCompleted && "opacity-45"
         )}
       >
         {posterUrl ? (
@@ -128,94 +140,97 @@ export function ListItemRow({
             alt={title}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="64px"
+            sizes="48px"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-            —
-          </div>
+          <div className="flex h-full items-center justify-center text-xs text-muted-foreground">—</div>
         )}
       </Link>
 
-      <div className="min-w-0 flex-1 space-y-2">
-        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
-          <Link href={href} className="font-medium leading-snug hover:underline">
-            {title}
-            {year && (
-              <span className="ml-2 text-sm font-normal tabular-nums text-muted-foreground">{year}</span>
-            )}
-          </Link>
-          {averageStars !== null && (
-            <span className="shrink-0 text-sm font-medium text-amber-500">
-              ★ {averageStars.toFixed(1)}
-            </span>
-          )}
-        </div>
+      <div className={cn("min-w-0 flex-1 space-y-1 transition-opacity", optimisticCompleted && "opacity-55")}>
+        <Link href={href} className="block truncate font-medium leading-snug hover:underline">
+          {title}
+          {year && <span className="ml-2 text-sm font-normal tabular-nums text-muted-foreground">{year}</span>}
+        </Link>
 
-        {memberRatings.length > 0 ? (
-          <div className="space-y-1.5">
-            <div className="flex flex-wrap gap-x-4 gap-y-1">
-              {memberRatings.map((r) => (
-                <div key={r.userId} className="flex items-center gap-1.5">
-                  <Link
-                    href={`/u/${r.username}`}
-                    className="text-xs font-medium hover:underline"
-                  >
-                    @{r.username}
-                  </Link>
-                  <StarRating value={r.stars} readOnly size={11} />
-                </div>
-              ))}
-            </div>
-            {memberRatings.some((r) => r.review) && (
-              <div className="space-y-0.5">
-                {memberRatings.filter((r) => r.review).map((r) => (
-                  <p key={r.userId} className="text-xs text-muted-foreground line-clamp-1">
-                    <span className="font-medium">@{r.username}:</span> {r.review}
-                  </p>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : null /* Sin calificaciones no mostramos nada: repetido en cada fila era ruido */}
-
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          <Button
-            type="button"
-            size="sm"
-            variant={optimisticCompleted ? "secondary" : "outline"}
-            onClick={toggleCompleted}
-            className="h-7 text-xs"
-          >
-            {optimisticCompleted ? (
-              // key distinta → React re-monta el span y la animación vuelve a correr
-              <span key="done" className="flex items-center gap-1 animate-in zoom-in-75 fade-in duration-200">
-                <CheckIcon size={12} weight="bold" className="text-amber-500" /> Vista
+        {/* Notas de los miembros (sin calificaciones no se muestra nada) */}
+        {memberRatings.length > 0 && (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5">
+            {memberRatings.map((r) => (
+              <span key={r.userId} className="flex items-center gap-1.5">
+                <Link href={`/u/${r.username}`} className="text-xs text-muted-foreground hover:text-foreground hover:underline">
+                  @{r.username}
+                </Link>
+                <StarRating value={r.stars} readOnly size={11} />
               </span>
-            ) : (
-              <span key="todo" className="animate-in fade-in duration-200">Marcar como vista</span>
-            )}
-          </Button>
-          {!myRating && (
-            <Button size="sm" variant="ghost" asChild className="h-7 text-xs">
-              <Link href={href}>Calificar →</Link>
-            </Button>
-          )}
+            ))}
+          </div>
+        )}
+        {memberRatings
+          .filter((r) => r.review)
+          .slice(0, 1)
+          .map((r) => (
+            <p key={r.userId} className="line-clamp-1 font-sans text-[13px] text-muted-foreground">
+              “{r.review}”
+            </p>
+          ))}
+      </div>
 
-          {/* Solo ícono: es una acción secundaria y el texto en cada fila recargaba */}
-          <Button
-            type="button"
-            size="icon-sm"
-            variant="ghost"
-            onClick={removeItem}
-            disabled={removing}
-            aria-label={`Quitar "${title}" de la lista`}
-            title="Quitar de la lista"
-            className="ml-auto text-muted-foreground hover:text-destructive"
+      {averageStars !== null && (
+        <span className="hidden shrink-0 text-sm font-medium tabular-nums text-primary sm:block">
+          ★ {averageStars.toFixed(1)}
+        </span>
+      )}
+
+      {/* Acciones redondas, en la línea del botón "Elegir al azar" */}
+      <div className="flex shrink-0 items-center gap-1.5">
+        <button
+          type="button"
+          onClick={toggleCompleted}
+          aria-pressed={optimisticCompleted}
+          aria-label={optimisticCompleted ? `Desmarcar "${title}" como vista` : `Marcar "${title}" como vista`}
+          title={optimisticCompleted ? "Vista · tocar para desmarcar" : "Marcar como vista"}
+          className={cn(
+            "flex size-9 items-center justify-center rounded-full border transition-all duration-200 active:scale-90",
+            optimisticCompleted
+              ? "border-primary bg-primary text-primary-foreground"
+              : "border-foreground/20 text-muted-foreground hover:border-foreground/60 hover:text-foreground"
+          )}
+        >
+          {/* key distinta → se re-monta y el ✓ hace un pequeño "pop" */}
+          <CheckIcon key={String(optimisticCompleted)} size={16} weight="bold" className="animate-in zoom-in-50 duration-200" />
+        </button>
+
+        {myRating ? (
+          <Link
+            href={rateHref}
+            title="Tu nota · tocar para cambiarla"
+            className="flex h-9 items-center gap-1 rounded-full border border-primary/40 px-3 text-xs font-medium tabular-nums text-primary transition-colors hover:border-primary"
           >
-            {removing || collapsing ? <Spinner size={14} /> : <TrashIcon size={16} />}
-          </Button>
-        </div>
+            ★ {myRating.stars}
+          </Link>
+        ) : (
+          <Link
+            href={rateHref}
+            aria-label={`Calificar "${title}"`}
+            title="Calificar"
+            className="flex size-9 items-center justify-center rounded-full border border-foreground/20 text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+          >
+            <StarIcon size={16} />
+          </Link>
+        )}
+
+        {/* Quitar: secundaria. En web aparece al pasar por la fila; en móvil, siempre */}
+        <button
+          type="button"
+          onClick={removeItem}
+          disabled={removing}
+          aria-label={`Quitar "${title}" de la lista`}
+          title="Quitar de la lista"
+          className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-[color,opacity] hover:text-destructive focus-visible:opacity-100 lg:opacity-0 lg:group-hover/row:opacity-100"
+        >
+          {removing || collapsing ? <Spinner size={14} /> : <TrashIcon size={16} />}
+        </button>
       </div>
     </article>
     </div>

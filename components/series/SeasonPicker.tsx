@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { chipClass } from "@/components/ui/chip";
 
 type Props = {
   seasons: { season_number: number; name: string }[];
@@ -25,12 +25,8 @@ export function SeasonPicker({ seasons, selected }: Props) {
           key={s.season_number}
           type="button"
           onClick={() => selectSeason(s.season_number)}
-          className={cn(
-            "shrink-0 border px-3 py-1 text-sm transition-colors",
-            selected === s.season_number
-              ? "border-amber-500 bg-amber-500/10 text-amber-500"
-              : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
-          )}
+          aria-pressed={selected === s.season_number}
+          className={chipClass(selected === s.season_number)}
         >
           {s.name}
         </button>

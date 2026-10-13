@@ -17,6 +17,7 @@ import { WatchProviders } from "../../../../components/movies/WatchProviders";
 import { AddToListButton } from "@/components/lists/AddToListButton";
 import { getUserListsWithMedia } from "@/lib/lists";
 import { getPersonDiscoverHref } from "@/lib/discover";
+import { SectionLabel } from "@/components/ui/section-label";
 
 function formatRuntime(minutes: number) {
   if (!minutes) return null;
@@ -118,7 +119,7 @@ export default async function MoviePage({
               {year && <span>{year}</span>}
               {runtime && <span>{runtime}</span>}
               {movie.vote_average > 0 && (
-                <span className="font-medium text-amber-500">
+                <span className="font-medium text-primary">
                   ★ {movie.vote_average.toFixed(1)}
                   <span className="font-normal text-muted-foreground">/10</span>
                 </span>
@@ -133,7 +134,7 @@ export default async function MoviePage({
                     {i > 0 && (i === directors.length - 1 ? " y " : ", ")}
                     <Link
                       href={getPersonDiscoverHref(d.id, d.name, "Directing")}
-                      className="font-medium text-foreground underline-offset-4 transition-colors hover:text-amber-500 hover:underline"
+                      className="font-medium text-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
                     >
                       {d.name}
                     </Link>
@@ -155,7 +156,7 @@ export default async function MoviePage({
         {movie.overview && (
           <ExpandableText
             text={movie.overview}
-            className="max-w-3xl text-sm leading-relaxed text-muted-foreground"
+            className="max-w-[68ch] font-sans text-[15px] leading-relaxed text-foreground/75"
           />
         )}
 
@@ -215,9 +216,9 @@ export default async function MoviePage({
 
         {topCast.length > 0 && (
           <section className="mt-8">
-            <h2 className="mb-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <SectionLabel as="h2" className="mb-4">
               Reparto
-            </h2>
+            </SectionLabel>
             <CastRow cast={topCast} />
           </section>
         )}

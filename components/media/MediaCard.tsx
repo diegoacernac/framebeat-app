@@ -83,7 +83,7 @@ export function MediaCard({
           </div>
         )}
         {seen && (
-          <span className="absolute left-1.5 top-1.5 flex items-center gap-0.5 bg-black/75 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">
+          <span className="absolute left-1.5 top-1.5 flex items-center gap-0.5 bg-black/75 px-1.5 py-0.5 text-[10px] font-medium text-primary">
             ✓ Vista
           </span>
         )}
@@ -92,10 +92,10 @@ export function MediaCard({
             <span className="text-sm font-medium leading-snug">{title}</span>
             <span className="flex items-center gap-2 text-xs text-white/70">
               {subtitle}
-              {hasRating && <span className="text-amber-400">★ {rating.toFixed(1)}</span>}
+              {hasRating && <span className="text-primary">★ {rating.toFixed(1)}</span>}
             </span>
             {overview && (
-              <span className="line-clamp-5 text-xs leading-snug text-white/70">{overview}</span>
+              <span className="line-clamp-5 font-sans text-xs leading-snug text-white/75">{overview}</span>
             )}
           </div>
         )}
@@ -104,7 +104,7 @@ export function MediaCard({
           <div className="absolute inset-0 flex flex-col justify-end gap-1 bg-gradient-to-t from-black via-black/60 to-transparent p-3 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
             <span className="text-sm font-medium leading-snug">{title}</span>
             {subtitle && <span className="text-xs text-white/70">{subtitle}</span>}
-            <span className="text-base text-amber-400">{"★".repeat(showStars)}</span>
+            <span className="text-base text-primary">{"★".repeat(showStars)}</span>
           </div>
         )}
       </div>
@@ -116,13 +116,13 @@ export function MediaCard({
         {(subtitle || hasRating) && (
           <p className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
             {subtitle}
-            {hasRating && <span className="tabular-nums text-amber-500/90">★ {rating.toFixed(1)}</span>}
+            {hasRating && <span className="tabular-nums text-primary/90">★ {rating.toFixed(1)}</span>}
           </p>
         )}
         {showStars !== undefined && showStars > 0 && (
           // Las 5 estrellas (vacías en gris): se lee "4 de 5" de un vistazo
           <p className="mt-1 text-sm leading-none tracking-wider" aria-label={`${showStars} de 5 estrellas`}>
-            <span className="text-amber-500">{"★".repeat(showStars)}</span>
+            <span className="text-primary">{"★".repeat(showStars)}</span>
             <span className="text-foreground/20">{"★".repeat(5 - showStars)}</span>
           </p>
         )}

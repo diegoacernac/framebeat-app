@@ -79,9 +79,9 @@ export function ListAddMovieSearch({ listId, kind = "movie", existingKeys }: Pro
             <li
               key={movie.id}
               className={cn(
-                "flex items-center gap-3 border p-2 text-sm transition-colors",
+                "flex items-center gap-3 border bg-card p-2 text-sm transition-colors",
                 "animate-in fade-in slide-in-from-top-1 fill-mode-both duration-200",
-                inList && "border-amber-500/40 bg-amber-500/5"
+                inList && "border-primary/40 bg-primary/5"
               )}
               style={{ animationDelay: `${i * 30}ms` }}
             >

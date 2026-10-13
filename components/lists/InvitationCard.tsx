@@ -44,7 +44,7 @@ export function InvitationCard({
   }
 
   return (
-    <li className="flex flex-wrap items-center justify-between gap-3 border border-amber-500/40 bg-amber-500/5 p-4 animate-in fade-in duration-300">
+    <li className="flex flex-wrap items-center justify-between gap-3 border border-primary/40 bg-primary/5 p-4 animate-in fade-in duration-300">
       <div className="min-w-0 space-y-0.5">
         <p className="font-medium">{title}</p>
         <p className="text-xs text-muted-foreground">

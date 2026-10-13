@@ -68,7 +68,7 @@ export function FeedReviewCard({
               "text-[10px] uppercase tracking-wider",
               mediaType === "album"
                 ? "text-violet-600 dark:text-violet-400"
-                : "text-amber-600 dark:text-amber-400"
+                : "text-primary"
             )}
           >
             {label}
@@ -82,7 +82,7 @@ export function FeedReviewCard({
         <StarRating value={stars} readOnly size={16} />
 
         {review && (
-          <p className="line-clamp-2 text-sm text-muted-foreground">
+          <p className="line-clamp-2 font-sans text-sm text-muted-foreground">
             {review}
           </p>
         )}

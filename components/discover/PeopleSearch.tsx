@@ -62,7 +62,7 @@ export function PeopleSearch({ selected, onChange }: Props) {
           {selected.map((p) => (
             <span
               key={p.id}
-              className="flex items-center gap-1 border border-amber-500 bg-amber-500 px-2.5 py-1 text-sm font-medium text-black"
+              className="flex items-center gap-1 border border-primary bg-primary px-2.5 py-1 text-sm font-medium text-primary-foreground"
             >
               {p.name}
               <button
@@ -90,7 +90,7 @@ export function PeopleSearch({ selected, onChange }: Props) {
         />
 
         {open && results.length > 0 && (
-          <div className="absolute left-0 right-0 top-full z-10 mt-1 border bg-background shadow-lg">
+          <div className="absolute left-0 right-0 top-full z-10 mt-1 border bg-popover shadow-xl">
             {results.map((person) => (
               <button
                 key={person.id}

@@ -34,7 +34,7 @@ export function TrailerButton({ trailer, title }: { trailer: Trailer; title: str
       <button
         type="button"
         onClick={show}
-        className="inline-flex h-8 items-center gap-1.5 bg-amber-500 px-3 text-xs font-medium text-black transition-colors hover:bg-amber-400"
+        className="inline-flex h-8 items-center gap-1.5 bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/85"
       >
         <PlayIcon size={14} weight="fill" /> Ver tráiler
       </button>
@@ -68,7 +68,7 @@ export function TrailerButton({ trailer, title }: { trailer: Trailer; title: str
                       aria-pressed={i === versionIndex}
                       className={
                         i === versionIndex
-                          ? "bg-amber-500 px-2.5 py-1 text-xs font-medium text-black"
+                          ? "bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground"
                           : "px-2.5 py-1 text-xs text-white/70 transition-colors hover:text-white"
                       }
                     >

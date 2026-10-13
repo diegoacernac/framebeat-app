@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { TrashIcon } from "@phosphor-icons/react/dist/ssr";
 import { Spinner } from "@/components/ui/spinner";
 
 type Props = {
@@ -39,21 +39,17 @@ export function DeleteListButton({ listId, title }: Props) {
 
   return (
     <div className="space-y-2">
-      <Button
+      {/* Discreto: es una acción rara y destructiva, no merece una "zona"
+          con título propio. Pide confirmación igual. */}
+      <button
         type="button"
-        variant="destructive"
-        size="sm"
         onClick={handleDelete}
         disabled={deleting}
+        className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-destructive disabled:opacity-50"
       >
-        {deleting ? (
-          <>
-            <Spinner /> Borrando...
-          </>
-        ) : (
-          "Borrar lista"
-        )}
-      </Button>
+        {deleting ? <Spinner size={12} /> : <TrashIcon size={13} />}
+        {deleting ? "Borrando..." : "Borrar lista"}
+      </button>
       {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   );

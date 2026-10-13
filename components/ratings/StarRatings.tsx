@@ -32,7 +32,7 @@ export function StarRating({
             key={star}
             size={size}
             weight={star <= value ? "fill" : "regular"}
-            className={star <= value ? "text-yellow-500" : "text-muted-foreground"}
+            className={star <= value ? "text-primary" : "text-muted-foreground"}
           />
         ))}
       </div>
@@ -58,7 +58,7 @@ export function StarRating({
             className={cn(
               "transition-colors duration-150",
               star <= display
-                ? "text-yellow-500"
+                ? "text-primary"
                 : "text-muted-foreground"
             )}
           />

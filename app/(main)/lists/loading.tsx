@@ -14,7 +14,7 @@ export default function Loading() {
 
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
         {Array.from({ length: 3 }).map((_, i) => (
-          <li key={i} className="space-y-4 border p-4">
+          <li key={i} className="space-y-4 border bg-card p-4">
             {/* Tira de pósters */}
             <div className="grid grid-cols-5 gap-1">
               {Array.from({ length: 5 }).map((_, j) => (

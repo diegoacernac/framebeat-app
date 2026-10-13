@@ -93,7 +93,7 @@ function ProgressBar() {
       }}
     >
       <div
-        className="h-full bg-amber-500 shadow-[0_0_8px_var(--color-amber-500)]"
+        className="h-full bg-primary shadow-[0_0_8px_var(--color-primary)]"
         style={{
           width: `${progress}%`,
           transition: state === "loading" ? "width 200ms ease-out" : "width 150ms ease-out",

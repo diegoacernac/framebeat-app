@@ -9,7 +9,17 @@
       "Bash(npx dotenv -e .env.local -- node -e ' *)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/api/discover?mood=romance\")",
       "Bash(grep -n -i -B2 -A12 \"viewportFit\\\\|### \\\\`width\\\\`\" /Users/diegoalexandercernacastillo/Dev/diego/framebeat/framebeat/node_modules/next/dist/docs/01-app/03-api-reference/04-functions/generate-viewport.md)",
-      "Bash(curl -s http://localhost:3000/login)"
+      "Bash(curl -s http://localhost:3000/login)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/movies/550)",
+      "Bash(git checkout *)",
+      "Bash(sed -i '' 's/import { CircleNotch } from/import { CircleNotchIcon } from/; s/<CircleNotch$/<CircleNotchIcon/' components/ui/spinner.tsx)",
+      "Bash(sed -i '' 's/import { Check } from \"@phosphor-icons\\\\/react\\\\/dist\\\\/ssr\";/import { CheckIcon } from \"@phosphor-icons\\\\/react\\\\/dist\\\\/ssr\";/; s/<Check size/<CheckIcon size/' components/lists/ListItemRow.tsx)",
+      "Bash(grep -rn '`/series/\\\\${\\\\|`/movies/\\\\${\\\\|`/albums/\\\\${' app components)",
+      "Bash(npx -y dotenv-cli -e .env.local -- npx -y tsx ./.tmp-check.ts)",
+      "Bash(sed -i '' -E 's#href=\\\\{`/movies/\\\\$\\\\{mostControversial\\\\.externalId\\\\}`\\\\}#href={getMediaHref\\(mostControversial.type, mostControversial.externalId\\)}#g; s#href=\\\\{`/movies/\\\\$\\\\{m\\\\.externalId\\\\}`\\\\}#href={getMediaHref\\(m.type, m.externalId\\)}#g' 'app/\\(main\\)/stats/page.tsx')",
+      "Bash(sed -i '' 's#^import { listMembers, mediaItems, profiles, ratings } from \"@/lib/db/schema\";#import { mediaItems, profiles, ratings } from \"@/lib/db/schema\";#; s#^import { and, desc, eq, inArray, ne } from \"drizzle-orm\";#import { and, desc, eq, inArray } from \"drizzle-orm\";#' 'app/\\(main\\)/stats/page.tsx')",
+      "Bash(sed -i '' '/key={userRating?.id ?? \"new\"}/d' \"app/\\(main\\)/movies/[id]/page.tsx\" \"app/\\(main\\)/albums/[id]/page.tsx\")",
+      "Bash(sed -i '' 's/key={myRating?.id ?? externalId}/key={externalId} \\\\/\\\\/ solo reinicia el formulario al cambiar de temporada/' \"app/\\(main\\)/series/[id]/page.tsx\")"
     ]
   }
 }

@@ -77,7 +77,7 @@ export function AddToListButton({
       >
         {inCount > 0 ? (
           <>
-            <CheckIcon weight="bold" className="text-amber-500" />
+            <CheckIcon weight="bold" className="text-primary" />
             En {inCount} {inCount === 1 ? "lista" : "listas"}
           </>
         ) : (
@@ -88,11 +88,11 @@ export function AddToListButton({
       </Button>
 
       {open && (
-        <div className="max-w-sm border bg-background p-1 shadow-lg animate-in fade-in slide-in-from-top-1 duration-200">
+        <div className="max-w-sm border bg-popover p-1 shadow-xl animate-in fade-in slide-in-from-top-1 duration-200">
           {lists.length === 0 ? (
             <p className="p-2 text-sm text-muted-foreground">
               Aún no tienes listas.{" "}
-              <Link href="/lists/new" className="text-amber-500 hover:underline">
+              <Link href="/lists/new" className="text-primary hover:underline">
                 Crea una
               </Link>
             </p>
@@ -109,14 +109,14 @@ export function AddToListButton({
                       disabled={pendingId !== null}
                       className={cn(
                         "flex w-full items-center gap-2.5 px-2 py-2 text-left text-sm transition-colors hover:bg-muted disabled:opacity-60",
-                        isIn && "text-amber-500"
+                        isIn && "text-primary"
                       )}
                     >
                       {/* Casilla: spinner mientras guarda, ✓ si está, + si no */}
                       <span
                         className={cn(
                           "flex size-5 shrink-0 items-center justify-center border transition-colors",
-                          isIn ? "border-amber-500 bg-amber-500/15" : "border-border"
+                          isIn ? "border-primary bg-primary/15" : "border-border"
                         )}
                       >
                         {isPending ? (
